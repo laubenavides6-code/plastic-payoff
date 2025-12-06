@@ -37,7 +37,7 @@ export function UpcomingCollectionCard({ collection }: UpcomingCollectionCardPro
   return (
     <Link
       to={`/collections/${collection.id}`}
-      className="eco-card space-y-3 group hover:shadow-elevated transition-shadow duration-200"
+      className="eco-card block space-y-3 group hover:shadow-elevated transition-shadow duration-200"
     >
       <div className="flex items-center justify-between">
         <h3 className="font-display font-semibold text-foreground">Próxima recolección</h3>
