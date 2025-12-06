@@ -1,13 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, MapPin, Calendar, Clock, MessageSquare, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-
-const dates = [
-  { id: "today", label: "Hoy" },
-  { id: "tomorrow", label: "Mañana" },
-];
+import { format, addDays } from "date-fns";
+import { es } from "date-fns/locale";
 
 const timeSlots = [
   { id: "8-11", label: "8:00 - 11:00" },
@@ -19,7 +16,20 @@ const timeSlots = [
 export default function SchedulePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { material, quantity } = location.state || { material: "PET", quantity: "3 kg" };
+  const { material, quantity } = location.state || { material: "PET", quantity: "~2.5 kg" };
+
+  // Generate dates starting from tomorrow (minimum 24 hours)
+  const availableDates = useMemo(() => {
+    const tomorrow = addDays(new Date(), 1);
+    const dayAfter = addDays(new Date(), 2);
+    const twoDaysAfter = addDays(new Date(), 3);
+    
+    return [
+      { id: "tomorrow", label: "Mañana", sublabel: format(tomorrow, "d 'de' MMMM", { locale: es }) },
+      { id: "dayAfter", label: "Pasado mañana", sublabel: format(dayAfter, "d 'de' MMMM", { locale: es }) },
+      { id: "twoDaysAfter", label: format(twoDaysAfter, "EEEE", { locale: es }), sublabel: format(twoDaysAfter, "d 'de' MMMM", { locale: es }) },
+    ];
+  }, []);
 
   const [address, setAddress] = useState("Cra 15 #82-45, Chapinero, Bogotá");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -91,19 +101,20 @@ export default function SchedulePage() {
         <section className="eco-section animate-fade-up" style={{ animationDelay: "100ms" }}>
           <h2 className="eco-section-title flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            Fecha *
+            Fecha * <span className="text-xs text-muted-foreground font-normal">(mínimo 24 horas)</span>
           </h2>
-          <div className="flex gap-3">
-            {dates.map((date) => (
+          <div className="flex flex-col gap-2">
+            {availableDates.map((date) => (
               <button
                 key={date.id}
                 onClick={() => setSelectedDate(date.id)}
                 className={cn(
-                  "eco-chip flex-1 py-3",
+                  "eco-chip py-3 flex flex-col items-start text-left",
                   selectedDate === date.id ? "eco-chip-active" : "eco-chip-inactive"
                 )}
               >
-                {date.label}
+                <span className="font-medium capitalize">{date.label}</span>
+                <span className="text-xs opacity-70">{date.sublabel}</span>
               </button>
             ))}
           </div>
