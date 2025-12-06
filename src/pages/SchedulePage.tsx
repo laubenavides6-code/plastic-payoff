@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, MapPin, Calendar, Clock, MessageSquare, Check } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, MessageSquare, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
+import AddressInput from "@/components/schedule/AddressInput";
 
 const timeSlots = [
   { id: "8-11", label: "8:00 - 11:00" },
@@ -16,7 +17,7 @@ const timeSlots = [
 export default function SchedulePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { material, quantity } = location.state || { material: "PET", quantity: "~2.5 kg" };
+  const { material, quantity } = location.state || { material: "PET", quantity: "2.5 kg" };
 
   // Generate dates starting from tomorrow (minimum 24 hours)
   const availableDates = useMemo(() => {
@@ -25,9 +26,9 @@ export default function SchedulePage() {
     const twoDaysAfter = addDays(new Date(), 3);
     
     return [
-      { id: "tomorrow", label: "Mañana", sublabel: format(tomorrow, "d 'de' MMMM", { locale: es }) },
-      { id: "dayAfter", label: "Pasado mañana", sublabel: format(dayAfter, "d 'de' MMMM", { locale: es }) },
-      { id: "twoDaysAfter", label: format(twoDaysAfter, "EEEE", { locale: es }), sublabel: format(twoDaysAfter, "d 'de' MMMM", { locale: es }) },
+      { id: "tomorrow", label: format(tomorrow, "EEEE d 'de' MMMM", { locale: es }) },
+      { id: "dayAfter", label: format(dayAfter, "EEEE d 'de' MMMM", { locale: es }) },
+      { id: "twoDaysAfter", label: format(twoDaysAfter, "EEEE d 'de' MMMM", { locale: es }) },
     ];
   }, []);
 
@@ -73,28 +74,17 @@ export default function SchedulePage() {
         <div className="eco-card bg-eco-green-light border border-primary/10 animate-fade-up">
           <div className="flex items-center gap-3">
             <div className="eco-badge eco-badge-green">{material}</div>
-            <span className="text-foreground font-medium">{quantity}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-foreground font-medium">{quantity}</span>
+              <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">Aproximado</span>
+            </div>
           </div>
         </div>
 
         {/* Address */}
         <section className="eco-section animate-fade-up" style={{ animationDelay: "50ms" }}>
-          <h2 className="eco-section-title flex items-center gap-2">
-            <MapPin className="w-4 h-4" />
-            Dirección *
-          </h2>
-          <div className="relative">
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Ingresa tu dirección completa"
-              className="eco-input pr-20"
-            />
-            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-primary font-medium hover:underline">
-              Cambiar
-            </button>
-          </div>
+          <h2 className="eco-section-title">Dirección de recolección *</h2>
+          <AddressInput value={address} onChange={setAddress} />
         </section>
 
         {/* Date */}
@@ -109,12 +99,11 @@ export default function SchedulePage() {
                 key={date.id}
                 onClick={() => setSelectedDate(date.id)}
                 className={cn(
-                  "eco-chip py-3 flex flex-col items-start text-left",
+                  "eco-chip py-3 text-left",
                   selectedDate === date.id ? "eco-chip-active" : "eco-chip-inactive"
                 )}
               >
                 <span className="font-medium capitalize">{date.label}</span>
-                <span className="text-xs opacity-70">{date.sublabel}</span>
               </button>
             ))}
           </div>

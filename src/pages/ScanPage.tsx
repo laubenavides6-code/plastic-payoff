@@ -32,7 +32,7 @@ export default function ScanPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState<ScanStep>("permission");
   const [detectedMaterial] = useState(materials[0]); // Simulated detection
-  const [estimatedWeight] = useState("~2.5 kg"); // AI estimates weight automatically
+  const [estimatedWeight] = useState("2.5 kg"); // AI estimates weight automatically
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   
   const instructions = detectedMaterial.isBottle ? bottleInstructions : baseInstructions;
@@ -286,7 +286,11 @@ export default function ScanPage() {
           <div className="eco-card flex items-center justify-between">
             <div>
               <p className="text-2xl font-display font-bold text-primary">{estimatedWeight}</p>
-              <p className="text-sm text-muted-foreground">Estimación basada en la imagen</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                <span className="inline-flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded-full">
+                  Aproximado
+                </span>
+              </p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-eco-green-light flex items-center justify-center">
               <Package className="w-6 h-6 text-primary" />
