@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Camera, X, HelpCircle, Droplets, Wind, Package, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type ScanStep = "permission" | "camera" | "result";
 
@@ -26,16 +27,87 @@ export default function ScanPage() {
   const [step, setStep] = useState<ScanStep>("permission");
   const [detectedMaterial] = useState(materials[0]); // Simulated detection
   const [selectedQuantity, setSelectedQuantity] = useState<string | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const handlePermission = () => {
-    setStep("camera");
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+  }, []);
+
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "environment", // Use back camera on mobile
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+      
+      streamRef.current = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      toast.error("No se pudo acceder a la cámara. Verifica los permisos.");
+      navigate(-1);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (step === "camera") {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+
+    return () => {
+      stopCamera();
+    };
+  }, [step, startCamera, stopCamera]);
+
+  const handlePermission = async () => {
+    try {
+      // Request permission first
+      const permission = await navigator.mediaDevices.getUserMedia({ video: true });
+      permission.getTracks().forEach(track => track.stop());
+      setStep("camera");
+    } catch (error) {
+      console.error("Camera permission denied:", error);
+      toast.error("Permiso de cámara denegado. Actívalo en la configuración del navegador.");
+    }
   };
 
   const handleCapture = () => {
-    // Simulate AI detection
-    setTimeout(() => {
-      setStep("result");
-    }, 500);
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL("image/jpeg", 0.8);
+        setCapturedImage(imageData);
+        stopCamera();
+        setStep("result");
+      }
+    }
+  };
+
+  const handleClose = () => {
+    stopCamera();
+    navigate(-1);
   };
 
   const handleSchedule = () => {
@@ -79,12 +151,23 @@ export default function ScanPage() {
   if (step === "camera") {
     return (
       <div className="min-h-screen bg-foreground relative flex flex-col">
-        {/* Simulated camera view */}
-        <div className="flex-1 relative bg-gradient-to-b from-foreground/90 to-foreground flex items-center justify-center">
+        {/* Hidden canvas for capturing */}
+        <canvas ref={canvasRef} className="hidden" />
+        
+        {/* Real camera view */}
+        <div className="flex-1 relative overflow-hidden">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          
           {/* Overlay */}
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
             <div className="text-center mb-8">
-              <p className="text-primary-foreground/90 text-lg font-medium">
+              <p className="text-primary-foreground/90 text-lg font-medium drop-shadow-lg">
                 Enfoca el plástico que quieres reciclar
               </p>
             </div>
@@ -98,21 +181,21 @@ export default function ScanPage() {
             </div>
 
             <button className="mt-8 p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors">
-              <HelpCircle className="w-6 h-6" />
+              <HelpCircle className="w-6 h-6 drop-shadow-lg" />
             </button>
           </div>
 
           {/* Close button */}
           <button
-            onClick={() => navigate(-1)}
-            className="absolute top-6 left-6 p-2 bg-primary-foreground/20 rounded-full hover:bg-primary-foreground/30 transition-colors"
+            onClick={handleClose}
+            className="absolute top-6 left-6 p-2 bg-foreground/40 backdrop-blur-sm rounded-full hover:bg-foreground/60 transition-colors"
           >
             <X className="w-6 h-6 text-primary-foreground" />
           </button>
         </div>
 
         {/* Capture button */}
-        <div className="bg-foreground py-8 flex flex-col items-center gap-4 safe-area-pb">
+        <div className="bg-foreground/90 backdrop-blur-sm py-8 flex flex-col items-center gap-4 safe-area-pb">
           <button
             onClick={handleCapture}
             className="w-20 h-20 rounded-full bg-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-elevated"
@@ -120,7 +203,7 @@ export default function ScanPage() {
             <div className="w-16 h-16 rounded-full border-4 border-primary" />
           </button>
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleClose}
             className="text-primary-foreground/70 text-sm hover:text-primary-foreground transition-colors"
           >
             Cancelar
@@ -136,7 +219,7 @@ export default function ScanPage() {
       {/* Header */}
       <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-10">
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleClose}
           className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors"
         >
           <X className="w-5 h-5 text-foreground" />
@@ -145,8 +228,21 @@ export default function ScanPage() {
       </header>
 
       <div className="px-5 py-6 space-y-6">
+        {/* Captured image preview */}
+        {capturedImage && (
+          <div className="animate-scale-in">
+            <div className="eco-card p-2 overflow-hidden">
+              <img 
+                src={capturedImage} 
+                alt="Foto capturada" 
+                className="w-full h-48 object-cover rounded-xl"
+              />
+            </div>
+          </div>
+        )}
+
         {/* Material detected */}
-        <div className="text-center animate-scale-in">
+        <div className="text-center animate-scale-in" style={{ animationDelay: capturedImage ? "100ms" : "0ms" }}>
           <span
             className={cn(
               "inline-block text-4xl font-display font-bold px-6 py-3 rounded-2xl",
@@ -165,7 +261,7 @@ export default function ScanPage() {
         </div>
 
         {/* Instructions */}
-        <section className="eco-section animate-fade-up" style={{ animationDelay: "100ms" }}>
+        <section className="eco-section animate-fade-up" style={{ animationDelay: capturedImage ? "200ms" : "100ms" }}>
           <h2 className="eco-section-title">Prepáralo así</h2>
           <div className="eco-card space-y-4">
             {instructions.map((instruction, index) => (
@@ -180,7 +276,7 @@ export default function ScanPage() {
         </section>
 
         {/* Quantity selection */}
-        <section className="eco-section animate-fade-up" style={{ animationDelay: "150ms" }}>
+        <section className="eco-section animate-fade-up" style={{ animationDelay: capturedImage ? "250ms" : "150ms" }}>
           <h2 className="eco-section-title">¿Cuánto tienes?</h2>
           <div className="flex gap-3">
             {quantities.map((qty) => (
@@ -199,7 +295,7 @@ export default function ScanPage() {
         </section>
 
         {/* Schedule button */}
-        <div className="pt-4 animate-fade-up" style={{ animationDelay: "200ms" }}>
+        <div className="pt-4 animate-fade-up" style={{ animationDelay: capturedImage ? "300ms" : "200ms" }}>
           <button
             onClick={handleSchedule}
             disabled={!selectedQuantity}
