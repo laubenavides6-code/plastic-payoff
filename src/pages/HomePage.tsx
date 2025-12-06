@@ -26,7 +26,7 @@ export default function HomePage() {
         {/* Header */}
         <header className="animate-fade-up" style={{ animationDelay: "0ms" }}>
           <h1 className="text-2xl font-display font-bold text-foreground">
-            Hola, {mockUser.name} 👋
+            Hola, {mockUser.name} 🌿
           </h1>
           <p className="text-muted-foreground mt-1">
             Cada plástico cuenta. ¡Empieza hoy!
