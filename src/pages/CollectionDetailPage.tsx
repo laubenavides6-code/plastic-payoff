@@ -1,6 +1,10 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Clock, MapPin, Package, MessageSquare, Leaf, TreePine, Wind } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const statusConfig = {
   pending: {
@@ -26,19 +30,13 @@ const statusConfig = {
 // Mock data - would come from API
 const mockCollection = {
   id: "1",
-  date: "Hoy, 6 de diciembre",
+  date: "Mañana, 7 de diciembre",
   timeSlot: "14:00 - 17:00",
   material: "PET",
   quantity: "3 kg",
   address: "Cra 15 #82-45, Chapinero, Bogotá",
-  status: "collected" as const,
-  comment: "Tocar el timbre del apto 301",
-  pointsEarned: 15,
-  impact: {
-    kgConfirmed: 3,
-    co2Saved: 2.4,
-    bottlesSaved: 60,
-  },
+  status: "accepted" as const,
+  comment: "",
 };
 
 export default function CollectionDetailPage() {
@@ -46,6 +44,17 @@ export default function CollectionDetailPage() {
   const { id } = useParams();
   const collection = mockCollection; // Would fetch by id
   const status = statusConfig[collection.status];
+  
+  const [comment, setComment] = useState(collection.comment);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveComment = async () => {
+    setIsSaving(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setIsSaving(false);
+    toast.success("Comentario guardado");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,7 +69,7 @@ export default function CollectionDetailPage() {
         <h1 className="text-lg font-display font-semibold text-foreground">Detalle de recolección</h1>
       </header>
 
-      <div className="px-5 py-6 space-y-6">
+      <div className="px-5 py-6 space-y-6 pb-24">
         {/* Status */}
         <section className="text-center animate-fade-up">
           <span className={cn("eco-badge text-base px-4 py-2", status.className)}>
@@ -86,50 +95,29 @@ export default function CollectionDetailPage() {
             <DetailRow icon={MapPin} label="Dirección">
               {collection.address}
             </DetailRow>
-            {collection.comment && (
-              <DetailRow icon={MessageSquare} label="Comentario">
-                {collection.comment}
-              </DetailRow>
-            )}
           </div>
         </section>
 
-        {/* Points earned (only if collected) */}
-        {collection.status === "collected" && (
-          <section className="eco-card bg-eco-green-light border border-primary/10 text-center animate-fade-up" style={{ animationDelay: "100ms" }}>
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Leaf className="w-6 h-6 text-primary" />
-              <span className="text-3xl font-display font-bold text-primary">
-                +{collection.pointsEarned}
-              </span>
-            </div>
-            <p className="text-sm text-foreground">Eco-puntos ganados 🎉</p>
-          </section>
-        )}
-
-        {/* Impact (only if collected) */}
-        {collection.status === "collected" && (
-          <section className="eco-section animate-fade-up" style={{ animationDelay: "150ms" }}>
-            <h2 className="eco-section-title">Tu impacto</h2>
-            <div className="grid grid-cols-3 gap-3">
-              <ImpactCard
-                icon={Package}
-                value={`${collection.impact.kgConfirmed} kg`}
-                label="Confirmados"
-              />
-              <ImpactCard
-                icon={Wind}
-                value={`${collection.impact.co2Saved} kg`}
-                label="CO₂ evitado"
-              />
-              <ImpactCard
-                icon={TreePine}
-                value={collection.impact.bottlesSaved.toString()}
-                label="Botellas"
-              />
-            </div>
-          </section>
-        )}
+        {/* Comment Section */}
+        <section className="eco-card space-y-3 animate-fade-up" style={{ animationDelay: "100ms" }}>
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-muted-foreground" />
+            <h2 className="font-display font-semibold text-foreground">Comentario para el reciclador</h2>
+          </div>
+          <Textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Ej: Tocar el timbre del apto 301, dejar en portería..."
+            className="eco-input min-h-[80px] resize-none"
+          />
+          <Button 
+            onClick={handleSaveComment} 
+            disabled={isSaving}
+            className="w-full eco-button-primary"
+          >
+            {isSaving ? "Guardando..." : "Guardar comentario"}
+          </Button>
+        </section>
       </div>
     </div>
   );
