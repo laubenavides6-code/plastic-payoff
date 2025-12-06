@@ -7,18 +7,24 @@ import { toast } from "sonner";
 type ScanStep = "permission" | "camera" | "result";
 
 const materials = [
-  { id: "pet", label: "PET", color: "bg-eco-green-light text-primary" },
-  { id: "pp", label: "PP", color: "bg-eco-green-light text-primary" },
-  { id: "ps", label: "PS", color: "bg-eco-green-light text-primary" },
-  { id: "ecoladrillo", label: "Ecoladrillo", color: "bg-eco-green-light text-primary" },
-  { id: "glass", label: "Vidrio", color: "bg-eco-coral-light text-accent", alert: true },
+  { id: "pet", label: "PET", color: "bg-eco-green-light text-primary", isBottle: true },
+  { id: "pp", label: "PP", color: "bg-eco-green-light text-primary", isBottle: false },
+  { id: "ps", label: "PS", color: "bg-eco-green-light text-primary", isBottle: false },
+  { id: "ecoladrillo", label: "Ecoladrillo", color: "bg-eco-green-light text-primary", isBottle: false },
+  { id: "glass", label: "Vidrio", color: "bg-eco-coral-light text-accent", alert: true, isBottle: true },
 ];
 
-const quantities = ["1 kg", "3 kg", "5 kg"];
-
-const instructions = [
+const baseInstructions = [
   { icon: Droplets, text: "Lávalo con agua" },
   { icon: Wind, text: "Déjalo secar" },
+  { icon: Package, text: "Aplástalo y guárdalo en una bolsa transparente" },
+];
+
+const bottleInstructions = [
+  { icon: Droplets, text: "Lávalo con agua" },
+  { icon: Wind, text: "Déjalo secar" },
+  { icon: Package, text: "Retira la tapa y ponla por separado (también es reciclable)" },
+  { icon: Package, text: "Quita la etiqueta si es posible" },
   { icon: Package, text: "Aplástalo y guárdalo en una bolsa transparente" },
 ];
 
@@ -26,9 +32,10 @@ export default function ScanPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState<ScanStep>("permission");
   const [detectedMaterial] = useState(materials[0]); // Simulated detection
-  const [selectedQuantity, setSelectedQuantity] = useState<string | null>(null);
+  const [estimatedWeight] = useState("~2.5 kg"); // AI estimates weight automatically
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   
+  const instructions = detectedMaterial.isBottle ? bottleInstructions : baseInstructions;
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -111,11 +118,9 @@ export default function ScanPage() {
   };
 
   const handleSchedule = () => {
-    if (selectedQuantity) {
-      navigate("/schedule", {
-        state: { material: detectedMaterial.label, quantity: selectedQuantity },
-      });
-    }
+    navigate("/schedule", {
+      state: { material: detectedMaterial.label, quantity: estimatedWeight },
+    });
   };
 
   if (step === "permission") {
@@ -275,22 +280,17 @@ export default function ScanPage() {
           </div>
         </section>
 
-        {/* Quantity selection */}
+        {/* Estimated weight (AI detected) */}
         <section className="eco-section animate-fade-up" style={{ animationDelay: capturedImage ? "250ms" : "150ms" }}>
-          <h2 className="eco-section-title">¿Cuánto tienes?</h2>
-          <div className="flex gap-3">
-            {quantities.map((qty) => (
-              <button
-                key={qty}
-                onClick={() => setSelectedQuantity(qty)}
-                className={cn(
-                  "eco-chip flex-1 py-3",
-                  selectedQuantity === qty ? "eco-chip-active" : "eco-chip-inactive"
-                )}
-              >
-                {qty}
-              </button>
-            ))}
+          <h2 className="eco-section-title">Peso estimado por IA</h2>
+          <div className="eco-card flex items-center justify-between">
+            <div>
+              <p className="text-2xl font-display font-bold text-primary">{estimatedWeight}</p>
+              <p className="text-sm text-muted-foreground">Estimación basada en la imagen</p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-eco-green-light flex items-center justify-center">
+              <Package className="w-6 h-6 text-primary" />
+            </div>
           </div>
         </section>
 
@@ -298,11 +298,7 @@ export default function ScanPage() {
         <div className="pt-4 animate-fade-up" style={{ animationDelay: capturedImage ? "300ms" : "200ms" }}>
           <button
             onClick={handleSchedule}
-            disabled={!selectedQuantity}
-            className={cn(
-              "eco-button-primary w-full flex items-center justify-center gap-2",
-              !selectedQuantity && "opacity-50 cursor-not-allowed shadow-none"
-            )}
+            className="eco-button-primary w-full flex items-center justify-center gap-2"
           >
             Agendar recolección
             <ArrowRight className="w-5 h-5" />
