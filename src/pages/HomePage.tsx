@@ -11,7 +11,7 @@ const mockUser = {
 
 const mockCollection = {
   id: "1",
-  date: "Hoy",
+  date: "Mañana",
   timeSlot: "14:00 - 17:00",
   material: "PET",
   quantity: "3 kg",
