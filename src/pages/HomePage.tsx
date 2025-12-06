@@ -29,7 +29,7 @@ export default function HomePage() {
             Hola, {mockUser.name} 👋
           </h1>
           <p className="text-muted-foreground mt-1">
-            ¿List@ para reciclar tu plástico hoy?
+            Cada plástico cuenta. ¡Empieza hoy!
           </p>
         </header>
 
