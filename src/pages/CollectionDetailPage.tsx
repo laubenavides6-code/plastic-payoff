@@ -314,7 +314,7 @@ export default function CollectionDetailPage() {
               <Button
                 onClick={() => setShowEditModal(true)}
                 variant="outline"
-                className="w-full flex items-center justify-center gap-2"
+                className="w-full flex items-center justify-center gap-2 bg-card hover:bg-eco-green-light hover:text-primary hover:border-primary/50"
               >
                 <Edit3 className="w-4 h-4" />
                 Modificar horario
@@ -446,7 +446,7 @@ export default function CollectionDetailPage() {
                           "py-3 px-4 rounded-xl border-2 font-semibold transition-all",
                           selectedTip === tip.value
                             ? "border-primary bg-eco-green-light text-primary"
-                            : "border-border bg-background text-foreground hover:border-primary/50"
+                            : "border-border bg-card text-foreground hover:border-primary/50"
                         )}
                       >
                         {tip.label}
