@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Clock, MapPin, Package, MessageSquare, Star, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 const tipOptions = [
@@ -77,58 +76,18 @@ const mockCollections: Record<string, {
   },
 };
 
-// Helper functions for localStorage persistence
-const getStoredRating = (collectionId: string): number => {
-  const stored = localStorage.getItem(`rating_${collectionId}`);
-  return stored ? parseInt(stored, 10) : 0;
-};
-
-const getStoredTip = (collectionId: string): number | null => {
-  const stored = localStorage.getItem(`tip_${collectionId}`);
-  return stored ? parseInt(stored, 10) : null;
-};
-
-const saveRating = (collectionId: string, rating: number) => {
-  localStorage.setItem(`rating_${collectionId}`, rating.toString());
-};
-
-const saveTip = (collectionId: string, tip: number) => {
-  localStorage.setItem(`tip_${collectionId}`, tip.toString());
-};
-
 export default function CollectionDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const collectionId = id || "1";
-  const collection = mockCollections[collectionId] || mockCollections["1"];
+  const collection = mockCollections[id || "1"] || mockCollections["1"];
   const status = statusConfig[collection.status];
   
   const [comment, setComment] = useState(collection.comment);
   const [isSaving, setIsSaving] = useState(false);
   const [rating, setRating] = useState(0);
   const [selectedTip, setSelectedTip] = useState<number | null>(null);
-  const [customTip, setCustomTip] = useState("");
   const [hasRated, setHasRated] = useState(false);
   const [hasTipped, setHasTipped] = useState(false);
-  const [savedRating, setSavedRating] = useState(0);
-  const [savedTip, setSavedTip] = useState<number | null>(null);
-
-  // Load saved data on mount
-  useEffect(() => {
-    const storedRating = getStoredRating(collectionId);
-    const storedTip = getStoredTip(collectionId);
-    
-    if (storedRating > 0) {
-      setRating(storedRating);
-      setSavedRating(storedRating);
-      setHasRated(true);
-    }
-    
-    if (storedTip !== null) {
-      setSavedTip(storedTip);
-      setHasTipped(true);
-    }
-  }, [collectionId]);
 
   const handleSaveComment = async () => {
     setIsSaving(true);
@@ -144,29 +103,18 @@ export default function CollectionDetailPage() {
     }
     setIsSaving(true);
     await new Promise(resolve => setTimeout(resolve, 500));
-    saveRating(collectionId, rating);
-    setSavedRating(rating);
     setIsSaving(false);
     setHasRated(true);
     toast.success("¡Gracias por tu calificación!");
   };
 
-  const getFinalTipAmount = (): number | null => {
-    if (selectedTip) return selectedTip;
-    const parsed = parseInt(customTip.replace(/\D/g, ""), 10);
-    return isNaN(parsed) || parsed <= 0 ? null : parsed;
-  };
-
   const handleSendTip = async () => {
-    const tipAmount = getFinalTipAmount();
-    if (!tipAmount) {
-      toast.error("Por favor selecciona o ingresa un monto");
+    if (!selectedTip) {
+      toast.error("Por favor selecciona un monto");
       return;
     }
     setIsSaving(true);
     await new Promise(resolve => setTimeout(resolve, 500));
-    saveTip(collectionId, tipAmount);
-    setSavedTip(tipAmount);
     setIsSaving(false);
     setHasTipped(true);
     toast.success("¡Propina enviada al reciclador!");
@@ -251,12 +199,12 @@ export default function CollectionDetailPage() {
               {hasRated ? (
                 <div className="text-center py-4">
                   <div className="flex justify-center gap-1 mb-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
+                    {[1, 2, 3].map((star) => (
                       <Star
                         key={star}
                         className={cn(
-                          "w-7 h-7",
-                          star <= savedRating ? "fill-eco-yellow text-eco-yellow" : "text-muted-foreground"
+                          "w-8 h-8",
+                          star <= rating ? "fill-eco-yellow text-eco-yellow" : "text-muted-foreground"
                         )}
                       />
                     ))}
@@ -265,16 +213,16 @@ export default function CollectionDetailPage() {
                 </div>
               ) : (
                 <>
-                  <div className="flex justify-center gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
+                  <div className="flex justify-center gap-3">
+                    {[1, 2, 3].map((star) => (
                       <button
                         key={star}
                         onClick={() => setRating(star)}
-                        className="p-1 transition-transform hover:scale-110 active:scale-95"
+                        className="p-2 transition-transform hover:scale-110 active:scale-95"
                       >
                         <Star
                           className={cn(
-                            "w-9 h-9 transition-colors",
+                            "w-10 h-10 transition-colors",
                             star <= rating ? "fill-eco-yellow text-eco-yellow" : "text-muted-foreground hover:text-eco-yellow/50"
                           )}
                         />
@@ -307,9 +255,6 @@ export default function CollectionDetailPage() {
                   <div className="w-12 h-12 bg-eco-green-light rounded-full flex items-center justify-center mx-auto mb-2">
                     <DollarSign className="w-6 h-6 text-primary" />
                   </div>
-                  <p className="text-foreground font-semibold mb-1">
-                    ${savedTip?.toLocaleString("es-CO")}
-                  </p>
                   <p className="text-muted-foreground text-sm">¡Propina enviada! Gracias por tu generosidad.</p>
                 </div>
               ) : (
@@ -318,10 +263,7 @@ export default function CollectionDetailPage() {
                     {tipOptions.map((tip) => (
                       <button
                         key={tip.value}
-                        onClick={() => {
-                          setSelectedTip(tip.value);
-                          setCustomTip("");
-                        }}
+                        onClick={() => setSelectedTip(tip.value)}
                         className={cn(
                           "py-3 px-4 rounded-xl border-2 font-semibold transition-all",
                           selectedTip === tip.value
@@ -333,26 +275,9 @@ export default function CollectionDetailPage() {
                       </button>
                     ))}
                   </div>
-                  
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="Otro monto"
-                      value={customTip}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "");
-                        setCustomTip(value);
-                        if (value) setSelectedTip(null);
-                      }}
-                      className="pl-7 eco-input"
-                    />
-                  </div>
-                  
                   <Button 
                     onClick={handleSendTip} 
-                    disabled={isSaving || (!selectedTip && !customTip)}
+                    disabled={isSaving || !selectedTip}
                     className="w-full eco-button-primary"
                   >
                     {isSaving ? "Enviando..." : "Enviar propina"}
