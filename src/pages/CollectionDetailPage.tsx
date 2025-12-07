@@ -257,9 +257,22 @@ export default function CollectionDetailPage() {
               placeholder="Ej: Tocar el timbre del apto 301, dejar en portería..."
               className="eco-input min-h-[80px] resize-none"
             />
-            <Button onClick={handleSaveComment} disabled={isSaving} className="w-full eco-button-primary">
+            <button 
+              onClick={handleSaveComment} 
+              disabled={isSaving} 
+              className="w-full py-3 text-primary font-medium hover:bg-primary/10 rounded-xl transition-colors disabled:opacity-50"
+              style={{ fontSize: "14px" }}
+            >
               {isSaving ? "Guardando..." : "Guardar comentario"}
-            </Button>
+            </button>
+            <button
+              onClick={handleDeleteReport}
+              disabled={isDeleting}
+              className="w-full py-3 text-destructive font-medium hover:bg-destructive/10 rounded-xl transition-colors disabled:opacity-50"
+              style={{ fontSize: "14px" }}
+            >
+              {isDeleting ? "Eliminando..." : "Eliminar recolección"}
+            </button>
           </section>
         )}
 
@@ -384,16 +397,19 @@ export default function CollectionDetailPage() {
           </>
         )}
 
-        {/* Delete Button */}
-        <div className="pt-4">
-          <button
-            onClick={handleDeleteReport}
-            disabled={isDeleting}
-            className="w-full py-3 text-destructive font-medium hover:bg-destructive/10 rounded-xl transition-colors disabled:opacity-50"
-          >
-            {isDeleting ? "Eliminando..." : "Eliminar reporte"}
-          </button>
-        </div>
+        {/* Delete Button - Only for collected */}
+        {isCollected && (
+          <div className="pt-4">
+            <button
+              onClick={handleDeleteReport}
+              disabled={isDeleting}
+              className="w-full py-3 text-destructive font-medium hover:bg-destructive/10 rounded-xl transition-colors disabled:opacity-50"
+              style={{ fontSize: "14px" }}
+            >
+              {isDeleting ? "Eliminando..." : "Eliminar recolección"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

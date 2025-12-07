@@ -37,7 +37,7 @@ const ReportsContext = createContext<ReportsContextType | undefined>(undefined);
 const generateDefaultReports = (userId: number): Report[] => {
   const now = new Date();
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const dec14 = new Date(2024, 11, 14, 10, 0, 0); // December 14, 2024
+  const dec14 = new Date(2025, 11, 14, 10, 0, 0); // December 14, 2025
 
   return [
     {

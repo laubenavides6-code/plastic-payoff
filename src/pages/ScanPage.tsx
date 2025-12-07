@@ -125,6 +125,14 @@ export default function ScanPage() {
 
         try {
           const result = await uploadImage(imageData);
+          
+          // Check if materials are empty
+          if (!result.materiales || result.materiales.length === 0) {
+            toast.error("No se detectó un material válido para reciclar");
+            navigate("/");
+            return;
+          }
+          
           setScanResult(result);
           setStep("result");
         } catch (error) {
