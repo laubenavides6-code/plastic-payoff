@@ -3,7 +3,6 @@ import { ScanButton } from "@/components/home/ScanButton";
 import { EcoPointsCard } from "@/components/home/EcoPointsCard";
 import { UpcomingCollectionCard } from "@/components/home/UpcomingCollectionCard";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
-import logoEcogiro from "@/assets/logo-ecogiro.png";
 
 // Mock data
 const mockUser = {
@@ -25,12 +24,8 @@ export default function HomePage() {
   return (
     <MobileLayout>
       <div className="px-5 py-6 space-y-6">
-        {/* Header with Logo */}
-        <header className="animate-fade-up" style={{ animationDelay: "0ms" }}>
-          <div className="flex items-center justify-between mb-4">
-            <img src={logoEcogiro} alt="EcoGiro" className="h-8 object-contain" />
-            <NotificationCenter />
-          </div>
+        {/* Header */}
+        <header className="animate-fade-up flex items-start justify-between" style={{ animationDelay: "0ms" }}>
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">
               Hola, {mockUser.name} 🌿
@@ -39,6 +34,7 @@ export default function HomePage() {
               Cada plástico cuenta. ¡Empieza hoy!
             </p>
           </div>
+          <NotificationCenter />
         </header>
 
         {/* Scan Button */}
