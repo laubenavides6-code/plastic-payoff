@@ -358,9 +358,14 @@ export default function ScanPage() {
                       // Find the "total" line or use first item
                       const totalLine = items.find(p => p.toLowerCase().includes("total")) || items[0] || "";
                       const pesoMatch = totalLine.match(/(\d+)\s*a\s*(\d+)/);
-                      const avgKg = pesoMatch 
+                      let avgKg = pesoMatch 
                         ? ((parseInt(pesoMatch[1]) + parseInt(pesoMatch[2])) / 2 / 1000).toFixed(4)
                         : "0";
+                      
+                      // If weight is 0, show 0.001 instead
+                      if (avgKg === "0" || avgKg === "0.0000") {
+                        avgKg = "0,001";
+                      }
                       
                       return (
                         <div className="flex flex-col gap-1">
