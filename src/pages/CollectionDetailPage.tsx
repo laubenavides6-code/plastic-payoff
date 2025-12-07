@@ -342,26 +342,49 @@ export default function CollectionDetailPage() {
                 </div>
               ) : (
                 <>
-                  <select
-                    value={selectedTip?.toString() || ""}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "custom") {
-                        setSelectedTip("custom");
-                      } else if (val) {
-                        setSelectedTip(parseInt(val));
-                      } else {
-                        setSelectedTip(null);
-                      }
-                    }}
-                    className="w-full py-3 px-4 rounded-xl border-2 border-border bg-card text-foreground focus:border-primary focus:outline-none"
-                  >
-                    <option value="">Selecciona un monto</option>
-                    <option value="2000">$2.000</option>
-                    <option value="5000">$5.000</option>
-                    <option value="10000">$10.000</option>
-                    <option value="custom">Otro monto</option>
-                  </select>
+                  <div className="space-y-2">
+                    {[2000, 5000, 10000].map((amount) => (
+                      <label
+                        key={amount}
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors",
+                          selectedTip === amount 
+                            ? "border-primary bg-primary/5" 
+                            : "border-border bg-card hover:border-muted-foreground/50"
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="donation"
+                          value={amount}
+                          checked={selectedTip === amount}
+                          onChange={() => setSelectedTip(amount)}
+                          className="w-4 h-4 accent-primary"
+                        />
+                        <span className="text-foreground font-medium">
+                          ${amount.toLocaleString("es-CO")}
+                        </span>
+                      </label>
+                    ))}
+                    <label
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors",
+                        selectedTip === "custom" 
+                          ? "border-primary bg-primary/5" 
+                          : "border-border bg-card hover:border-muted-foreground/50"
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="donation"
+                        value="custom"
+                        checked={selectedTip === "custom"}
+                        onChange={() => setSelectedTip("custom")}
+                        className="w-4 h-4 accent-primary"
+                      />
+                      <span className="text-foreground font-medium">Otro monto</span>
+                    </label>
+                  </div>
 
                   {selectedTip === "custom" && (
                     <div className="relative mt-3">
@@ -385,22 +408,18 @@ export default function CollectionDetailPage() {
                   </Button>
                 </>
               )}
+
+              {/* Delete button inside the card */}
+              <button
+                onClick={handleDeleteReport}
+                disabled={isDeleting}
+                className="w-full py-3 text-destructive font-medium hover:bg-destructive/10 rounded-xl transition-colors disabled:opacity-50 mt-4"
+                style={{ fontSize: "14px" }}
+              >
+                {isDeleting ? "Eliminando..." : "Eliminar recolección"}
+              </button>
             </section>
           </>
-        )}
-
-        {/* Delete Button - Only for collected */}
-        {isCollected && (
-          <div className="pt-4">
-            <button
-              onClick={handleDeleteReport}
-              disabled={isDeleting}
-              className="w-full py-3 text-destructive font-medium hover:bg-destructive/10 rounded-xl transition-colors disabled:opacity-50"
-              style={{ fontSize: "14px" }}
-            >
-              {isDeleting ? "Eliminando..." : "Eliminar recolección"}
-            </button>
-          </div>
         )}
       </div>
     </div>

@@ -37,6 +37,7 @@ const ReportsContext = createContext<ReportsContextType | undefined>(undefined);
 const generateDefaultReports = (userId: number): Report[] => {
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+  const yesterday = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
   const dec14 = new Date(2025, 11, 14, 10, 0, 0); // December 14, 2025
 
   return [
@@ -86,7 +87,39 @@ const generateDefaultReports = (userId: number): Report[] => {
       rre_fecha_reporte: twoDaysAgo.toISOString(),
       rre_puntos_otorgados: 0,
     },
+    {
+      rre_id: 4,
+      usu_ciudadano_id: userId,
+      usu_reciclador_id: 0,
+      tma_id: 1,
+      rre_cantidad_kg: "1.50",
+      rre_foto_url: "",
+      rre_foto_descripcion: "Envases de plástico limpios",
+      rre_ubicacion_lat: "4.6401",
+      rre_ubicacion_lng: "-74.1701",
+      rre_direccion_texto: "Calle 45 #12-20, Chapinero, Bogotá",
+      rre_estado: "EN_ESPERA",
+      rre_fecha_reporte: yesterday.toISOString(),
+      rre_puntos_otorgados: 0,
+    },
   ];
+};
+
+// Check if data needs migration (version check)
+const DATA_VERSION_KEY = "eco_data_version";
+const CURRENT_DATA_VERSION = 2;
+
+const needsDataMigration = (): boolean => {
+  try {
+    const version = localStorage.getItem(DATA_VERSION_KEY);
+    return !version || parseInt(version) < CURRENT_DATA_VERSION;
+  } catch {
+    return true;
+  }
+};
+
+const markDataVersion = () => {
+  localStorage.setItem(DATA_VERSION_KEY, CURRENT_DATA_VERSION.toString());
 };
 
 // Check if it's the first time for this user
@@ -121,6 +154,57 @@ const loadReportsFromStorage = (userId: number): Report[] => {
       allReports = [...allReports, ...defaultReports];
       saveReportsToStorage(allReports);
       markAsInitialized(userId);
+      markDataVersion();
+    }
+    
+    // Check if we need to add EN_ESPERA reports for existing users
+    if (needsDataMigration()) {
+      const userReports = allReports.filter(r => r.usu_ciudadano_id === userId);
+      const hasEnEspera = userReports.some(r => r.rre_estado === "EN_ESPERA");
+      
+      if (!hasEnEspera) {
+        const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+        const yesterday = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
+        const maxId = allReports.length > 0 ? Math.max(...allReports.map(r => r.rre_id)) : 0;
+        
+        const newEnEsperaReports: Report[] = [
+          {
+            rre_id: maxId + 1,
+            usu_ciudadano_id: userId,
+            usu_reciclador_id: 0,
+            tma_id: 3,
+            rre_cantidad_kg: "3.00",
+            rre_foto_url: "",
+            rre_foto_descripcion: "Cartón y papel para reciclar",
+            rre_ubicacion_lat: "4.6301",
+            rre_ubicacion_lng: "-74.1801",
+            rre_direccion_texto: "Avenida 68 #25-30, Bogotá",
+            rre_estado: "EN_ESPERA",
+            rre_fecha_reporte: twoDaysAgo.toISOString(),
+            rre_puntos_otorgados: 0,
+          },
+          {
+            rre_id: maxId + 2,
+            usu_ciudadano_id: userId,
+            usu_reciclador_id: 0,
+            tma_id: 1,
+            rre_cantidad_kg: "1.50",
+            rre_foto_url: "",
+            rre_foto_descripcion: "Envases de plástico limpios",
+            rre_ubicacion_lat: "4.6401",
+            rre_ubicacion_lng: "-74.1701",
+            rre_direccion_texto: "Calle 45 #12-20, Chapinero, Bogotá",
+            rre_estado: "EN_ESPERA",
+            rre_fecha_reporte: yesterday.toISOString(),
+            rre_puntos_otorgados: 0,
+          },
+        ];
+        
+        allReports = [...allReports, ...newEnEsperaReports];
+        saveReportsToStorage(allReports);
+      }
+      
+      markDataVersion();
     }
     
     // Migrate old statuses to new ones
