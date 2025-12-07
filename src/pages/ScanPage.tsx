@@ -126,13 +126,6 @@ export default function ScanPage() {
         try {
           const result = await uploadImage(imageData);
           
-          // Check if materials are empty
-          if (!result.materiales || result.materiales.length === 0) {
-            toast.error("No se detectó un material válido para reciclar");
-            navigate("/");
-            return;
-          }
-          
           setScanResult(result);
           setStep("result");
         } catch (error) {
@@ -171,6 +164,16 @@ export default function ScanPage() {
       },
     });
   };
+
+  // Check if materials are valid recyclable materials
+  const hasValidMaterials = scanResult?.materiales && 
+    scanResult.materiales.length > 0 && 
+    !scanResult.materiales.some(m => 
+      m.toLowerCase().includes("no hay materiales") || 
+      m.toLowerCase().includes("no se detectó") ||
+      m.toLowerCase().includes("no visible")
+    ) &&
+    (scanResult?.puntaje ?? 0) > 0;
 
   const sectionConfig = [
     { key: "materiales", title: "Materiales detectados", icon: Package, iconColor: "text-primary" },
@@ -397,11 +400,17 @@ export default function ScanPage() {
         <div className="pt-4 animate-fade-up" style={{ animationDelay: "200ms" }}>
           <button
             onClick={handleSchedule}
-            className="eco-button-primary w-full flex items-center justify-center gap-2"
+            disabled={!hasValidMaterials}
+            className="eco-button-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Agendar recolección
             <ArrowRight className="w-5 h-5" />
           </button>
+          {!hasValidMaterials && (
+            <p className="text-center text-destructive mt-2" style={{ fontSize: "12px" }}>
+              No se detectaron materiales reciclables válidos
+            </p>
+          )}
         </div>
       </div>
     </div>
