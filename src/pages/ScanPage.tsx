@@ -148,9 +148,12 @@ export default function ScanPage() {
     const pesoMatch = pesoText.match(/(\d+)\s*a\s*(\d+)/);
     const avgPeso = pesoMatch ? ((parseInt(pesoMatch[1]) + parseInt(pesoMatch[2])) / 2 / 1000).toFixed(3) : "0";
     
+    // Get materials from the response for the schedule page
+    const materialesText = scanResult?.materiales?.join(", ") || "Material reciclable";
+    
     navigate("/schedule", {
       state: { 
-        material: scanResult?.materiales?.[0] || "Material reciclable",
+        material: materialesText,
         peso: avgPeso,
         puntos_otorgados: scanResult?.puntaje?.toString() || "0",
         capturedImage: capturedImage,
@@ -326,13 +329,25 @@ export default function ScanPage() {
                     </div>
                     <div className="flex flex-col">
                       <span className="font-semibold text-foreground">{title}</span>
-                      {isPesoEstimado && (
-                        <span className="text-[10px] text-muted-foreground/50">Aproximado</span>
-                      )}
                     </div>
                   </div>
                   
-                  {isPreparacion ? (
+                  {isPesoEstimado ? (
+                    // Show only first value for peso_estimado with special styling
+                    (() => {
+                      const firstPeso = items[0] || "";
+                      const pesoMatch = firstPeso.match(/(\d+)\s*(?:a\s*(\d+))?\s*(gramos|kg|g)/i);
+                      const pesoValue = pesoMatch ? (pesoMatch[2] ? `${pesoMatch[1]}-${pesoMatch[2]}` : pesoMatch[1]) : "";
+                      const pesoUnit = pesoMatch?.[3] || "g";
+                      
+                      return (
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl font-bold text-primary">{pesoValue} {pesoUnit}</span>
+                          <span className="text-xs text-muted-foreground/60 bg-muted/30 px-2 py-0.5 rounded-full">Aproximado</span>
+                        </div>
+                      );
+                    })()
+                  ) : isPreparacion ? (
                     <div className="space-y-2">
                       {items.map((item, index) => (
                         <div key={index} className="flex items-start gap-3">
@@ -346,8 +361,8 @@ export default function ScanPage() {
                   ) : (
                     <ul className="space-y-2">
                       {items.map((item, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                        <li key={index} className="flex items-start gap-3 text-sm text-muted-foreground">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
                           <span>{item}</span>
                         </li>
                       ))}
