@@ -36,8 +36,8 @@ const ReportsContext = createContext<ReportsContextType | undefined>(undefined);
 // Generate default reports for a user
 const generateDefaultReports = (userId: number): Report[] => {
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-  const yesterday = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
+  const dec9 = new Date(2025, 11, 9, 10, 0, 0); // December 9, 2025
+  const dec12 = new Date(2025, 11, 12, 10, 0, 0); // December 12, 2025
   const dec14 = new Date(2025, 11, 14, 10, 0, 0); // December 14, 2025
 
   return [
@@ -84,7 +84,7 @@ const generateDefaultReports = (userId: number): Report[] => {
       rre_ubicacion_lng: "-74.1801",
       rre_direccion_texto: "Avenida 68 #25-30, Bogotá",
       rre_estado: "EN_ESPERA",
-      rre_fecha_reporte: twoDaysAgo.toISOString(),
+      rre_fecha_reporte: dec9.toISOString(),
       rre_puntos_otorgados: 0,
     },
     {
@@ -99,7 +99,7 @@ const generateDefaultReports = (userId: number): Report[] => {
       rre_ubicacion_lng: "-74.1701",
       rre_direccion_texto: "Calle 45 #12-20, Chapinero, Bogotá",
       rre_estado: "EN_ESPERA",
-      rre_fecha_reporte: yesterday.toISOString(),
+      rre_fecha_reporte: dec12.toISOString(),
       rre_puntos_otorgados: 0,
     },
   ];
@@ -163,8 +163,8 @@ const loadReportsFromStorage = (userId: number): Report[] => {
       const hasEnEspera = userReports.some(r => r.rre_estado === "EN_ESPERA");
       
       if (!hasEnEspera) {
-        const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-        const yesterday = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
+        const dec9 = new Date(2025, 11, 9, 10, 0, 0);
+        const dec12 = new Date(2025, 11, 12, 10, 0, 0);
         const maxId = allReports.length > 0 ? Math.max(...allReports.map(r => r.rre_id)) : 0;
         
         const newEnEsperaReports: Report[] = [
@@ -180,7 +180,7 @@ const loadReportsFromStorage = (userId: number): Report[] => {
             rre_ubicacion_lng: "-74.1801",
             rre_direccion_texto: "Avenida 68 #25-30, Bogotá",
             rre_estado: "EN_ESPERA",
-            rre_fecha_reporte: twoDaysAgo.toISOString(),
+            rre_fecha_reporte: dec9.toISOString(),
             rre_puntos_otorgados: 0,
           },
           {
@@ -195,7 +195,7 @@ const loadReportsFromStorage = (userId: number): Report[] => {
             rre_ubicacion_lng: "-74.1701",
             rre_direccion_texto: "Calle 45 #12-20, Chapinero, Bogotá",
             rre_estado: "EN_ESPERA",
-            rre_fecha_reporte: yesterday.toISOString(),
+            rre_fecha_reporte: dec12.toISOString(),
             rre_puntos_otorgados: 0,
           },
         ];
