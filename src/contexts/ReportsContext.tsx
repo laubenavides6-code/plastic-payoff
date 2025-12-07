@@ -36,6 +36,7 @@ const ReportsContext = createContext<ReportsContextType | undefined>(undefined);
 // Generate default reports for a user
 const generateDefaultReports = (userId: number): Report[] => {
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
   const dec14 = new Date(2025, 11, 14, 10, 0, 0); // December 14, 2025
 
   return [
@@ -69,6 +70,21 @@ const generateDefaultReports = (userId: number): Report[] => {
       rre_estado: "ACEPTADO",
       rre_fecha_reporte: dec14.toISOString(),
       rre_puntos_otorgados: 25,
+    },
+    {
+      rre_id: 3,
+      usu_ciudadano_id: userId,
+      usu_reciclador_id: 0,
+      tma_id: 3,
+      rre_cantidad_kg: "3.00",
+      rre_foto_url: "",
+      rre_foto_descripcion: "Cartón y papel para reciclar",
+      rre_ubicacion_lat: "4.6301",
+      rre_ubicacion_lng: "-74.1801",
+      rre_direccion_texto: "Avenida 68 #25-30, Bogotá",
+      rre_estado: "EN_ESPERA",
+      rre_fecha_reporte: twoDaysAgo.toISOString(),
+      rre_puntos_otorgados: 0,
     },
   ];
 };
