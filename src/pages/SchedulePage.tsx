@@ -9,6 +9,7 @@ import AddressInput from "@/components/schedule/AddressInput";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/AuthContext";
+import { useReports } from "@/contexts/ReportsContext";
 
 const BASE_URL = "https://ecogiro.jdxico.easypanel.host";
 
@@ -48,6 +49,7 @@ export default function SchedulePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, updateUserPoints } = useAuth();
+  const { refetchReports } = useReports();
   
   const { material, peso, puntos_otorgados, capturedImage } = location.state || {
     material: "PET",
@@ -101,8 +103,7 @@ export default function SchedulePage() {
         direccion_texto: address,
         ia_confianza: Math.floor(Math.random() * 11),
         estado: "PENDIENTE",
-        fecha_reporte: new Date().toISOString(),
-        fecha_recogida: fechaRecoleccion.toISOString(),
+        fecha_reporte: fechaRecoleccion.toISOString(),
         puntos_otorgados: parseInt(puntos_otorgados) || 0,
       };
 
@@ -118,6 +119,9 @@ export default function SchedulePage() {
         const errorData = await response.json();
         throw new Error(errorData.errors?.[0]?.message || "Error al crear el reporte");
       }
+
+      // Refetch reports to update the list
+      await refetchReports();
 
       // Fetch updated user data
       try {
