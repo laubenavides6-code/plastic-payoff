@@ -1,5 +1,5 @@
 import { MobileLayout } from "@/components/layout/MobileLayout";
-import { Leaf, Gift, Award, TreePine, Droplets, Wind, Lock } from "lucide-react";
+import { Leaf, Gift, Award, Sparkles, Recycle, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const mockData = {
@@ -7,14 +7,14 @@ const mockData = {
   rewards: [
     { id: 1, title: "Café gratis", points: 50, image: "☕", available: true },
     { id: 2, title: "Descuento 10%", points: 100, image: "🏷️", available: true },
-    { id: 3, title: "Bolsa ecológica", points: 200, image: "🛍️", available: false },
-    { id: 4, title: "Árbol plantado", points: 500, image: "🌳", available: false },
+    { id: 3, title: "Kit eco-aseo", points: 200, image: "🪥", available: false, subtitle: "Jabón, cepillo bambú y más" },
+    { id: 4, title: "Boletas de cine", points: 500, image: "🎬", available: false, subtitle: "2 entradas para ti" },
   ],
   medals: [
-    { id: 1, title: "Primera vez", icon: Leaf, unlocked: true },
-    { id: 2, title: "5 recolecciones", icon: Award, unlocked: true },
-    { id: 3, title: "10 kg reciclados", icon: TreePine, unlocked: false },
-    { id: 4, title: "Eco-héroe", icon: Gift, unlocked: false },
+    { id: 1, title: "Primera Huella", subtitle: "Tu primer reciclaje", icon: Leaf, unlocked: true },
+    { id: 2, title: "Guardián Verde", subtitle: "5 recolecciones", icon: Award, unlocked: true },
+    { id: 3, title: "Reciclador Experto", subtitle: "10 kg reciclados", icon: Recycle, unlocked: false },
+    { id: 4, title: "Eco-Héroe", subtitle: "50 recolecciones", icon: Sparkles, unlocked: false },
   ],
   impact: {
     kgRecycled: 15,
@@ -40,24 +40,40 @@ export default function RewardsPage() {
         <section className="eco-section animate-fade-up" style={{ animationDelay: "50ms" }}>
           <h2 className="eco-section-title">Recompensas</h2>
           <div className="grid grid-cols-2 gap-3">
-            {mockData.rewards.map((reward) => (
-              <div
-                key={reward.id}
-                className={cn(
-                  "eco-card text-center relative overflow-hidden",
-                  !reward.available && "opacity-60"
-                )}
-              >
-                <div className="text-4xl mb-2">{reward.image}</div>
-                <h3 className="font-medium text-foreground text-sm">{reward.title}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{reward.points} puntos</p>
-                {!reward.available && (
-                  <span className="eco-badge eco-badge-coral absolute top-2 right-2 text-[10px]">
-                    Próximamente
-                  </span>
-                )}
-              </div>
-            ))}
+            {mockData.rewards.map((reward) => {
+              const pointsNeeded = reward.points - mockData.points;
+              const progress = Math.min((mockData.points / reward.points) * 100, 100);
+              
+              return (
+                <div
+                  key={reward.id}
+                  className={cn(
+                    "eco-card text-center relative overflow-hidden",
+                    !reward.available && "opacity-80"
+                  )}
+                >
+                  <div className="text-4xl mb-2">{reward.image}</div>
+                  <h3 className="font-medium text-foreground text-sm">{reward.title}</h3>
+                  {reward.subtitle && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{reward.subtitle}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">{reward.points} puntos</p>
+                  {!reward.available && (
+                    <div className="mt-2">
+                      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary rounded-full transition-all duration-300"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-primary font-medium mt-1 block">
+                        ¡Te faltan {pointsNeeded} puntos!
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
 
@@ -75,7 +91,7 @@ export default function RewardsPage() {
               >
                 <div
                   className={cn(
-                    "w-12 h-12 rounded-xl flex items-center justify-center",
+                    "w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl flex items-center justify-center",
                     medal.unlocked ? "bg-eco-green-light" : "bg-muted"
                   )}
                 >
@@ -85,10 +101,10 @@ export default function RewardsPage() {
                     <Lock className="w-5 h-5 text-muted-foreground" />
                   )}
                 </div>
-                <div>
-                  <h3 className="font-medium text-foreground text-sm">{medal.title}</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {medal.unlocked ? "Desbloqueada" : "Bloqueada"}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-foreground text-sm truncate">{medal.title}</h3>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {medal.subtitle}
                   </p>
                 </div>
               </div>
@@ -98,22 +114,25 @@ export default function RewardsPage() {
 
         {/* Impact */}
         <section className="eco-section animate-fade-up" style={{ animationDelay: "150ms" }}>
-          <h2 className="eco-section-title">Tu impacto</h2>
-          <div className="grid grid-cols-3 gap-3">
+          <h2 className="eco-section-title">Tu impacto real</h2>
+          <div className="space-y-3">
             <ImpactCard
-              icon={TreePine}
-              value={`${mockData.impact.kgRecycled} kg`}
-              label="Reciclados"
+              emoji="🌳"
+              value="3 árboles"
+              label="Has salvado el equivalente a 3 árboles con tu reciclaje"
+              highlight="¡Sigue así!"
             />
             <ImpactCard
-              icon={Wind}
-              value={`${mockData.impact.co2Saved} kg`}
-              label="CO₂ evitado"
+              emoji="👕"
+              value="15 camisetas"
+              label="Con 300 botellas recicladas se pueden fabricar 15 camisetas"
+              highlight="Increíble aporte"
             />
             <ImpactCard
-              icon={Droplets}
-              value={mockData.impact.plasticBottles.toString()}
-              label="Botellas"
+              emoji="🚗"
+              value="50 km"
+              label="Evitaste emisiones equivalentes a un viaje de 50 km en auto"
+              highlight="Aire más limpio"
             />
           </div>
         </section>
@@ -123,17 +142,25 @@ export default function RewardsPage() {
 }
 
 interface ImpactCardProps {
-  icon: React.ComponentType<{ className?: string }>;
+  emoji: string;
   value: string;
   label: string;
+  highlight: string;
 }
 
-function ImpactCard({ icon: Icon, value, label }: ImpactCardProps) {
+function ImpactCard({ emoji, value, label, highlight }: ImpactCardProps) {
   return (
-    <div className="eco-card text-center">
-      <Icon className="w-6 h-6 text-primary mx-auto mb-2" />
-      <p className="font-display font-bold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
+    <div className="eco-card flex items-start gap-4">
+      <div className="w-12 h-12 min-w-[48px] rounded-xl bg-eco-green-light flex items-center justify-center text-2xl">
+        {emoji}
+      </div>
+      <div className="flex-1">
+        <p className="font-display font-bold text-foreground text-lg">{value}</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">{label}</p>
+        <span className="inline-block mt-1 text-[10px] font-medium text-primary bg-eco-green-light px-2 py-0.5 rounded-full">
+          {highlight}
+        </span>
+      </div>
     </div>
   );
 }
