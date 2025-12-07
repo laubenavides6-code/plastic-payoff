@@ -8,6 +8,10 @@ import { cn } from "@/lib/utils";
 const MAPBOX_TOKEN = "pk.eyJ1IjoibWF0ZW8xMjIiLCJhIjoiY21pcTNqYTlmMGMxZTNlcHdhMnhmczFwdiJ9.8C4efXzPA1KALooo2ZmP4w";
 const MAPBOX_STYLE = "mapbox://styles/mapbox/streets-v12";
 
+// Default address: El Regalo, Bosa, Bogotá
+const DEFAULT_ADDRESS = "Calle 73 Sur #80C-21, El Regalo, Bosa, Bogotá";
+const DEFAULT_COORDS: [number, number] = [-74.1901, 4.6201];
+
 interface AddressInputProps {
   value: string;
   onChange: (address: string, coords?: [number, number]) => void;
@@ -156,28 +160,36 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
     setLocationError(null);
     setGeocodingError(null);
     
-    if (!navigator.geolocation) {
-      setLocationError("Los permisos de ubicación son requeridos para solicitar una recolección");
-      return;
+    // Set default coords for El Regalo, Bosa
+    currentCoordsRef.current = DEFAULT_COORDS;
+    setModalAddress(DEFAULT_ADDRESS);
+    setShowMapModal(true);
+    
+    // Try to get user location, but don't block if denied
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Update to user location if available
+          currentCoordsRef.current = [position.coords.longitude, position.coords.latitude];
+          if (mapRef.current) {
+            mapRef.current.flyTo({
+              center: currentCoordsRef.current,
+              zoom: 16,
+              duration: 1000,
+            });
+            reverseGeocode(currentCoordsRef.current[0], currentCoordsRef.current[1]);
+          }
+        },
+        (error) => {
+          console.log("Geolocation not available, using default location");
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
     }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        // Location granted - open modal
-        currentCoordsRef.current = [position.coords.longitude, position.coords.latitude];
-        setShowMapModal(true);
-      },
-      (error) => {
-        // Location denied
-        console.error("Geolocation error:", error);
-        setLocationError("Los permisos de ubicación son requeridos para solicitar una recolección");
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
   };
 
   // Initialize map when modal opens
@@ -186,7 +198,7 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    const center = currentCoordsRef.current || [-74.0721, 4.7110]; // Default: Bogotá
+    const center = currentCoordsRef.current || DEFAULT_COORDS;
 
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
@@ -196,9 +208,6 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
     });
 
     mapRef.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-    // Initial reverse geocode
-    reverseGeocode(center[0], center[1]);
 
     // Handle map move end
     mapRef.current.on("moveend", handleMapMove);

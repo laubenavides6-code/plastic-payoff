@@ -1,9 +1,9 @@
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { Leaf, Gift, Award, Sparkles, Recycle, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const mockData = {
-  points: 120,
   rewards: [
     { id: 1, title: "5% dcto en Juan Valdez", points: 50, image: "☕", available: true },
     { id: 2, title: "10% dcto en productos Éxito", points: 100, image: "🏷️", available: true },
@@ -24,6 +24,9 @@ const mockData = {
 };
 
 export default function RewardsPage() {
+  const { user } = useAuth();
+  const userPoints = user?.puntos_acumulados || 0;
+
   return (
     <MobileLayout>
       <div className="px-5 py-6 space-y-6">
@@ -33,7 +36,7 @@ export default function RewardsPage() {
             <Leaf className="w-10 h-10 text-primary" />
           </div>
           <p className="text-muted-foreground text-sm">Tus eco-puntos</p>
-          <h1 className="text-5xl font-display font-bold text-foreground">{mockData.points}</h1>
+          <h1 className="text-5xl font-display font-bold text-foreground">{userPoints}</h1>
         </header>
 
         {/* Rewards */}
@@ -41,15 +44,16 @@ export default function RewardsPage() {
           <h2 className="eco-section-title">Recompensas</h2>
           <div className="grid grid-cols-2 gap-3">
             {mockData.rewards.map((reward) => {
-              const pointsNeeded = reward.points - mockData.points;
-              const progress = Math.min((mockData.points / reward.points) * 100, 100);
+              const pointsNeeded = reward.points - userPoints;
+              const progress = Math.min((userPoints / reward.points) * 100, 100);
+              const isAvailable = userPoints >= reward.points;
               
               return (
                 <div
                   key={reward.id}
                   className={cn(
                     "eco-card text-center relative overflow-hidden flex flex-col",
-                    !reward.available && "opacity-80"
+                    !isAvailable && "opacity-80"
                   )}
                 >
                   <div className="text-4xl mb-2">{reward.image}</div>
@@ -58,7 +62,7 @@ export default function RewardsPage() {
                     {reward.subtitle || "\u00A0"}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">{reward.points} puntos</p>
-                  {!reward.available && (
+                  {!isAvailable && (
                     <div className="mt-2">
                       <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                         <div 
