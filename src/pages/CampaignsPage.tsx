@@ -228,7 +228,7 @@ export default function CampaignsPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleAcceptCampaign(campaign.id)}
-                        className="text-primary hover:text-primary/80 text-xs"
+                        className="text-primary hover:bg-eco-green-light hover:text-primary text-xs"
                       >
                         <CheckCircle className="w-4 h-4 mr-1" />
                         Marcar aceptada
