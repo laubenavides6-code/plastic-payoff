@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 const mockData = {
   points: 120,
   rewards: [
-    { id: 1, title: "5% dcto en Juan Valdez", points: 50, image: "☕", available: true },
-    { id: 2, title: "10% dcto en productos Éxito", points: 100, image: "🏷️", available: true },
+    { id: 1, title: "5% descuento en Juan Valdez", points: 50, image: "☕", available: true },
+    { id: 2, title: "10% descuento en productos Éxito", points: 100, image: "🏷️", available: true },
     { id: 3, title: "Kit eco-aseo", points: 200, image: "🪥", available: false, subtitle: "Jabón artesanal y cepillo de bambú." },
     { id: 4, title: "Boletas de cine", points: 500, image: "🎬", available: false, subtitle: "2 entradas para ti" },
   ],
@@ -54,9 +54,12 @@ export default function RewardsPage() {
                 >
                   <div className="text-4xl mb-2">{reward.image}</div>
                   <h3 className="font-medium text-foreground text-sm">{reward.title}</h3>
-                  {reward.subtitle && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{reward.subtitle}</p>
-                  )}
+                  <p className={cn(
+                    "text-[10px] text-muted-foreground mt-0.5",
+                    !reward.subtitle && "invisible"
+                  )}>
+                    {reward.subtitle || "Placeholder"}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">{reward.points} puntos</p>
                   {!reward.available && (
                     <div className="mt-2">

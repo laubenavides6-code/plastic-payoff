@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Leaf, Lock, User } from "lucide-react";
+import { Lock, User } from "lucide-react";
 import { toast } from "sonner";
+import logoSolo from "@/assets/logo-solo.png";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -39,10 +40,11 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-8 animate-fade-up">
         {/* Logo */}
         <div className="text-center">
-          <div className="w-20 h-20 bg-eco-green-light rounded-full flex items-center justify-center mx-auto mb-4">
-            <Leaf className="w-10 h-10 text-primary" />
+          <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+            <img src={logoSolo} alt="EcoGiro Logo" className="w-20 h-20 object-contain" />
           </div>
           <h1 className="text-3xl font-display font-bold text-foreground">EcoGiro</h1>
+          <p className="text-primary text-sm font-medium mt-2 italic">Tu reciclaje, su oportunidad, nuestro futuro</p>
           <p className="text-muted-foreground mt-2">Ingresa a tu cuenta</p>
         </div>
 
