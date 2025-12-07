@@ -6,7 +6,7 @@ import { UpcomingCollectionSkeleton } from "@/components/home/UpcomingCollection
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { useAuth } from "@/contexts/AuthContext";
 import { useReports } from "@/contexts/ReportsContext";
-import { Recycle } from "lucide-react";
+
 
 export default function HomePage() {
   const { user, getTotalPoints } = useAuth();
@@ -19,7 +19,7 @@ export default function HomePage() {
         <header className="animate-fade-up flex items-start justify-between" style={{ animationDelay: "0ms" }}>
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-              Hola, {user?.nombres || "Usuario"} <Recycle className="w-6 h-6 text-primary" />
+              Hola, {user?.nombres || "Usuario"} 🍃
             </h1>
             <p className="text-muted-foreground mt-1">
               Cada plástico cuenta. ¡Empieza hoy!

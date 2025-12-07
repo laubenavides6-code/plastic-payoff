@@ -82,6 +82,9 @@ export default function SchedulePage() {
     setIsSubmitting(true);
 
     try {
+      // Small delay to give loader feedback
+      await new Promise(resolve => setTimeout(resolve, 1200));
+
       const selectedTimeSlot = timeSlots.find(t => t.id === selectedTime);
       const fechaRecoleccion = selectedTimeSlot 
         ? setMinutes(setHours(selectedDate, selectedTimeSlot.hour), 0)
