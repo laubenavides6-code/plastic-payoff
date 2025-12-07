@@ -17,6 +17,7 @@ export interface Report {
   rre_direccion_texto: string;
   rre_estado: string;
   rre_fecha_reporte: string;
+  rre_fecha_recogida?: string;
   rre_puntos_otorgados: number;
 }
 

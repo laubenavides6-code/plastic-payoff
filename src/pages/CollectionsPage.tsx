@@ -1,6 +1,6 @@
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { Clock, MapPin, Package, ChevronRight, Star, DollarSign } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useReports, Report } from "@/contexts/ReportsContext";
@@ -38,18 +38,12 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 export default function CollectionsPage() {
   const { reports, isLoading, refetchReports } = useReports();
   const [savedRatings, setSavedRatings] = useState<Record<string, { rating: number; tip: number | null }>>({});
-  const location = useLocation();
 
+  // Simple: refetch reports once on mount
   useEffect(() => {
+    refetchReports();
     setSavedRatings(getSavedRatings());
   }, []);
-
-  // Refetch reports when coming from schedule page
-  useEffect(() => {
-    if (location.state?.refresh) {
-      refetchReports();
-    }
-  }, [location.state?.refresh, refetchReports]);
 
   // Filter reports by status - only PENDIENTE and RECOGIDO
   const upcoming = reports.filter((r) => r.rre_estado === "PENDIENTE");
@@ -152,7 +146,8 @@ function CollectionCard({ report, savedData }: CollectionCardProps) {
 
   const statusKey = report.rre_estado?.toUpperCase() || "PENDIENTE";
   const status = statusConfig[statusKey] || statusConfig.PENDIENTE;
-  const formattedDate = formatDateToSpanish(report.rre_fecha_reporte);
+  // Use rre_fecha_recogida if available, fallback to rre_fecha_reporte
+  const formattedDate = formatDateToSpanish(report.rre_fecha_recogida || report.rre_fecha_reporte);
   const hasRating = savedData?.rating && savedData.rating > 0;
   const hasTip = savedData?.tip !== null && savedData?.tip !== undefined;
 
