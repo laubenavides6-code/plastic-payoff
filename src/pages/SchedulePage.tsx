@@ -162,12 +162,12 @@ export default function SchedulePage() {
       <div className="px-5 py-6 space-y-6">
         {/* Material summary */}
         <div className="eco-card bg-eco-green-light border border-primary/10 animate-fade-up">
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="eco-badge eco-badge-green whitespace-nowrap">{material}</div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-foreground" style={{ fontSize: "12px" }}>{material}</span>
             {peso && parseFloat(peso) > 0 && (
-              <div className="flex items-center gap-2 whitespace-nowrap">
-                <span className="text-foreground font-medium">{peso} kg</span>
-                <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">Aproximado</span>
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground font-medium" style={{ fontSize: "10px" }}>{peso}kg</span>
+                <span className="text-muted-foreground/60 bg-muted/30 px-1.5 py-0.5 rounded-full" style={{ fontSize: "8px" }}>Aproximado</span>
               </div>
             )}
           </div>

@@ -38,7 +38,10 @@ export default function HomePage() {
         </div>
 
         {/* Upcoming Collection */}
-        <div className="animate-fade-up" style={{ animationDelay: "150ms" }}>
+        <section className="animate-fade-up space-y-3" style={{ animationDelay: "150ms" }}>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Próxima recolección
+          </h2>
           {isLoading ? (
             <UpcomingCollectionSkeleton />
           ) : upcomingCollection ? (
@@ -48,7 +51,7 @@ export default function HomePage() {
               <p className="text-muted-foreground">No tienes recolecciones programadas</p>
             </div>
           )}
-        </div>
+        </section>
 
         {/* Quick Tips */}
         <section className="animate-fade-up space-y-3" style={{ animationDelay: "200ms" }}>

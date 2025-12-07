@@ -333,17 +333,19 @@ export default function ScanPage() {
                   </div>
                   
                   {isPesoEstimado ? (
-                    // Show only first value for peso_estimado with special styling
+                    // Show average weight in kg with special styling
                     (() => {
-                      const firstPeso = items[0] || "";
-                      const pesoMatch = firstPeso.match(/(\d+)\s*(?:a\s*(\d+))?\s*(gramos|kg|g)/i);
-                      const pesoValue = pesoMatch ? (pesoMatch[2] ? `${pesoMatch[1]}-${pesoMatch[2]}` : pesoMatch[1]) : "";
-                      const pesoUnit = pesoMatch?.[3] || "g";
+                      // Find the "total" line or use first item
+                      const totalLine = items.find(p => p.toLowerCase().includes("total")) || items[0] || "";
+                      const pesoMatch = totalLine.match(/(\d+)\s*a\s*(\d+)/);
+                      const avgKg = pesoMatch 
+                        ? ((parseInt(pesoMatch[1]) + parseInt(pesoMatch[2])) / 2 / 1000).toFixed(4)
+                        : "0";
                       
                       return (
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl font-bold text-primary">{pesoValue} {pesoUnit}</span>
-                          <span className="text-xs text-muted-foreground/60 bg-muted/30 px-2 py-0.5 rounded-full">Aproximado</span>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-2xl font-bold text-primary">{avgKg} kg</span>
+                          <span className="text-muted-foreground/60 bg-muted/30 px-2 py-0.5 rounded-full w-fit" style={{ fontSize: "8px" }}>Aproximado</span>
                         </div>
                       );
                     })()
