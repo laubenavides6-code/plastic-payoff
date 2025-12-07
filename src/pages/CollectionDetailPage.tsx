@@ -9,12 +9,6 @@ import { useReports, Report } from "@/contexts/ReportsContext";
 import { formatDateToSpanish, reverseGeocode } from "@/utils/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const tipOptions = [
-  { value: 2000, label: "$2.000" },
-  { value: 5000, label: "$5.000" },
-  { value: 10000, label: "$10.000" },
-  { value: "custom", label: "Otro" },
-];
 
 // Helper functions for localStorage persistence
 const STORAGE_KEY = "collection_ratings";
@@ -42,8 +36,8 @@ const statusConfig: Record<string, { label: string; description: string; classNa
   ACEPTADO: {
     label: "Aceptado",
     description: "Un reciclador recogerá tu plástico en la franja seleccionada.",
-    className: "bg-eco-green-light text-primary",
-    color: "text-primary",
+    className: "bg-blue-100 text-blue-700",
+    color: "text-blue-700",
   },
   EN_ESPERA: {
     label: "En espera",
@@ -280,7 +274,7 @@ export default function CollectionDetailPage() {
                 <h2 className="font-display font-semibold text-foreground">Califica al reciclador</h2>
               </div>
 
-              {hasRated ? (
+            {hasRated ? (
                 <div className="text-center py-4">
                   <div className="flex justify-center gap-1 mb-2">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -293,7 +287,7 @@ export default function CollectionDetailPage() {
                       />
                     ))}
                   </div>
-                  <p className="text-muted-foreground text-sm">¡Gracias por tu calificación!</p>
+                  <p className="text-primary" style={{ fontSize: "10px" }}>Calificación enviada</p>
                 </div>
               ) : (
                 <>
@@ -320,7 +314,7 @@ export default function CollectionDetailPage() {
                     disabled={isSaving || rating === 0}
                     className="w-full eco-button-primary"
                   >
-                    {isSaving ? "Enviando..." : "Enviar calificación"}
+                    {isSaving ? "Guardando..." : "Guardar calificación"}
                   </Button>
                 </>
               )}
@@ -330,10 +324,10 @@ export default function CollectionDetailPage() {
             <section className="eco-card space-y-4 animate-fade-up" style={{ animationDelay: "150ms" }}>
               <div className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-muted-foreground" />
-                <h2 className="font-display font-semibold text-foreground">Propina para el reciclador</h2>
+                <h2 className="font-display font-semibold text-foreground">Donación para el reciclador</h2>
               </div>
               <p className="text-sm text-muted-foreground">
-                Tu propina ayuda a reconocer el trabajo de nuestros recicladores
+                Tu donación ayuda a reconocer el trabajo de nuestros recicladores
               </p>
 
               {hasTipped ? (
@@ -344,29 +338,33 @@ export default function CollectionDetailPage() {
                   <p className="text-foreground font-semibold mb-1">
                     ${savedTipAmount?.toLocaleString("es-CO")}
                   </p>
-                  <p className="text-muted-foreground text-sm">¡Propina enviada! Gracias por tu generosidad.</p>
+                  <p className="text-primary" style={{ fontSize: "10px" }}>Donación enviada</p>
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-3">
-                    {tipOptions.map((tip) => (
-                      <button
-                        key={tip.value}
-                        onClick={() => setSelectedTip(tip.value)}
-                        className={cn(
-                          "py-3 px-4 rounded-xl border-2 font-semibold transition-all",
-                          selectedTip === tip.value
-                            ? "border-primary bg-eco-green-light text-primary"
-                            : "border-border bg-card text-foreground hover:border-primary/50"
-                        )}
-                      >
-                        {tip.label}
-                      </button>
-                    ))}
-                  </div>
+                  <select
+                    value={selectedTip?.toString() || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "custom") {
+                        setSelectedTip("custom");
+                      } else if (val) {
+                        setSelectedTip(parseInt(val));
+                      } else {
+                        setSelectedTip(null);
+                      }
+                    }}
+                    className="w-full py-3 px-4 rounded-xl border-2 border-border bg-card text-foreground focus:border-primary focus:outline-none"
+                  >
+                    <option value="">Selecciona un monto</option>
+                    <option value="2000">$2.000</option>
+                    <option value="5000">$5.000</option>
+                    <option value="10000">$10.000</option>
+                    <option value="custom">Otro monto</option>
+                  </select>
 
                   {selectedTip === "custom" && (
-                    <div className="relative">
+                    <div className="relative mt-3">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                       <input
                         type="number"
@@ -381,9 +379,9 @@ export default function CollectionDetailPage() {
                   <Button
                     onClick={handleSendTip}
                     disabled={isSaving || !selectedTip || (selectedTip === "custom" && !customTip)}
-                    className="w-full eco-button-primary"
+                    className="w-full eco-button-primary mt-3"
                   >
-                    {isSaving ? "Enviando..." : "Enviar propina"}
+                    {isSaving ? "Guardando..." : "Dar donación"}
                   </Button>
                 </>
               )}
