@@ -260,7 +260,7 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
 
         {/* Suggestions dropdown */}
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-xl shadow-lg z-20 max-h-60 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-border rounded-xl shadow-lg z-[100] max-h-60 overflow-y-auto">
             {suggestions.map((suggestion) => (
               <button
                 key={suggestion.id}
