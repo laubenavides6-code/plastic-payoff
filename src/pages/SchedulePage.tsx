@@ -91,7 +91,7 @@ export default function SchedulePage() {
         usuario_ciudadano_id: user.user_id,
         tipo_material_id: getMaterialTypeId(material),
         cantidad_kg: parseFloat(peso) || 0,
-        foto_url: capturedImage || "",
+        foto_url: capturedImage ? `image_${Date.now()}.jpg` : "",
         foto_descripcion: comment,
         ubicacion_lat: addressCoords[1],
         ubicacion_lng: addressCoords[0],
@@ -163,10 +163,10 @@ export default function SchedulePage() {
         {/* Material summary */}
         <div className="eco-card bg-eco-green-light border border-primary/10 animate-fade-up">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-foreground" style={{ fontSize: "12px" }}>{material}</span>
+            <span className="font-medium text-primary" style={{ fontSize: "14px" }}>{material}</span>
             {peso && parseFloat(peso) > 0 && (
               <div className="flex items-center gap-1">
-                <span className="text-muted-foreground font-medium" style={{ fontSize: "10px" }}>{peso}kg</span>
+                <span className="text-muted-foreground font-medium" style={{ fontSize: "12px" }}>{peso}kg</span>
                 <span className="text-muted-foreground/60 bg-muted/30 px-1.5 py-0.5 rounded-full" style={{ fontSize: "8px" }}>Aproximado</span>
               </div>
             )}

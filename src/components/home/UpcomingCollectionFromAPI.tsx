@@ -47,8 +47,12 @@ export function UpcomingCollectionFromAPI({ report }: UpcomingCollectionFromAPIP
       to={`/collections/${report.rre_id}`}
       className="eco-card block space-y-3 group hover:shadow-elevated transition-shadow duration-200"
     >
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between">
         <span className={cn("eco-badge", status.className)}>{status.label}</span>
+        <div className="flex items-center gap-1 text-sm text-primary font-medium">
+          Ver detalles
+          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -64,11 +68,6 @@ export function UpcomingCollectionFromAPI({ report }: UpcomingCollectionFromAPIP
           <MapPin className="w-4 h-4 flex-shrink-0" />
           <span className="truncate">{address}</span>
         </div>
-      </div>
-
-      <div className="flex items-center justify-end gap-1 text-sm text-primary font-medium pt-1">
-        Ver detalles
-        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
       </div>
     </Link>
   );
