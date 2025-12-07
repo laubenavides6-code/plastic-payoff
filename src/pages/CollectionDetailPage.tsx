@@ -167,13 +167,14 @@ export default function CollectionDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-50 relative">
+      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-50">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors relative z-10"
+          className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors z-[60]"
           aria-label="Volver"
+          type="button"
         >
-          <ArrowLeft className="w-5 h-5 text-foreground" />
+          <ArrowLeft className="w-5 h-5 text-foreground pointer-events-none" />
         </button>
         <h1 className="text-lg font-display font-semibold text-foreground">Detalle de recolección</h1>
       </header>
