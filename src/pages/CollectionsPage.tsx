@@ -3,10 +3,12 @@ import { Clock, MapPin, Package, ChevronRight, Star, DollarSign } from "lucide-r
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { useReports, Report } from "@/contexts/ReportsContext";
+import { formatDateToSpanish, reverseGeocode } from "@/utils/formatters";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Helper to read saved ratings from localStorage
 const STORAGE_KEY = "collection_ratings";
-const COLLECTIONS_KEY = "user_collections";
 
 const getSavedRatings = (): Record<string, { rating: number; tip: number | null }> => {
   try {
@@ -17,85 +19,33 @@ const getSavedRatings = (): Record<string, { rating: number; tip: number | null 
   }
 };
 
-interface Collection {
-  id: string;
-  date: string;
-  timeSlot: string;
-  material: string;
-  quantity: string;
-  address: string;
-  status: "pending" | "accepted" | "collected";
-  createdAt?: string;
-}
-
-const getUserCollections = (): Collection[] => {
-  try {
-    const stored = localStorage.getItem(COLLECTIONS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-};
-
-const statusConfig = {
-  pending: {
+// Status config based on API values
+const statusConfig: Record<string, { label: string; className: string }> = {
+  ASIGNADO: {
+    label: "Asignado",
+    className: "bg-eco-green-light text-primary",
+  },
+  PENDIENTE: {
     label: "En espera",
     className: "bg-eco-yellow-light text-foreground",
   },
-  accepted: {
-    label: "Aceptada",
-    className: "bg-eco-green-light text-primary",
-  },
-  collected: {
-    label: "Recolectada",
+  RECOGIDO: {
+    label: "Recogido",
     className: "bg-muted text-muted-foreground",
   },
 };
 
-const mockCollections = [
-  {
-    id: "1",
-    date: "Domingo 7 diciembre",
-    timeSlot: "14:00 - 17:00",
-    material: "PET",
-    quantity: "3 kg",
-    address: "Cra 15 #82-45, Chapinero, Bogotá",
-    status: "accepted" as const,
-  },
-  {
-    id: "2",
-    date: "Jueves 27 noviembre",
-    timeSlot: "11:00 - 14:00",
-    material: "PP",
-    quantity: "2 kg",
-    address: "Cra 15 #82-45, Chapinero, Bogotá",
-    status: "collected" as const,
-  },
-  {
-    id: "3",
-    date: "Lunes 3 noviembre",
-    timeSlot: "8:00 - 11:00",
-    material: "HDPE",
-    quantity: "4 kg",
-    address: "Cra 15 #82-45, Chapinero, Bogotá",
-    status: "collected" as const,
-  },
-];
-
 export default function CollectionsPage() {
+  const { reports, isLoading } = useReports();
   const [savedRatings, setSavedRatings] = useState<Record<string, { rating: number; tip: number | null }>>({});
-  const [userCollections, setUserCollections] = useState<Collection[]>([]);
-  
+
   useEffect(() => {
     setSavedRatings(getSavedRatings());
-    setUserCollections(getUserCollections());
   }, []);
 
-  // Combine user collections with mock data
-  const allCollections = [...userCollections, ...mockCollections];
-  
-  const upcoming = allCollections.filter((c) => c.status !== "collected");
-  const history = allCollections.filter((c) => c.status === "collected");
+  // Filter reports by status
+  const upcoming = reports.filter((r) => r.rre_estado !== "RECOGIDO");
+  const history = reports.filter((r) => r.rre_estado === "RECOGIDO");
 
   return (
     <MobileLayout>
@@ -106,59 +56,111 @@ export default function CollectionsPage() {
           <p className="text-muted-foreground mt-1">Revisa el estado de tus solicitudes</p>
         </header>
 
+        {/* Loading skeleton */}
+        {isLoading && (
+          <div className="space-y-6">
+            <section className="eco-section">
+              <h2 className="eco-section-title">Próximas</h2>
+              <div className="space-y-3">
+                <CollectionCardSkeleton />
+                <CollectionCardSkeleton />
+              </div>
+            </section>
+          </div>
+        )}
+
         {/* Upcoming */}
-        {upcoming.length > 0 && (
+        {!isLoading && upcoming.length > 0 && (
           <section className="eco-section animate-fade-up" style={{ animationDelay: "50ms" }}>
             <h2 className="eco-section-title">Próximas</h2>
             <div className="space-y-3">
-              {upcoming.map((collection) => (
-                <CollectionCard key={collection.id} collection={collection} savedData={savedRatings[collection.id]} />
+              {upcoming.map((report) => (
+                <CollectionCard
+                  key={report.rre_id}
+                  report={report}
+                  savedData={savedRatings[report.rre_id.toString()]}
+                />
               ))}
             </div>
           </section>
         )}
 
         {/* History */}
-        <section className="eco-section animate-fade-up" style={{ animationDelay: "100ms" }}>
-          <h2 className="eco-section-title">Historial</h2>
-          {history.length > 0 ? (
-            <div className="space-y-3">
-              {history.map((collection) => (
-                <CollectionCard key={collection.id} collection={collection} savedData={savedRatings[collection.id]} />
-              ))}
-            </div>
-          ) : (
-            <div className="eco-card text-center py-8">
-              <p className="text-muted-foreground">Aún no tienes recolecciones completadas</p>
-            </div>
-          )}
-        </section>
+        {!isLoading && (
+          <section className="eco-section animate-fade-up" style={{ animationDelay: "100ms" }}>
+            <h2 className="eco-section-title">Historial</h2>
+            {history.length > 0 ? (
+              <div className="space-y-3">
+                {history.map((report) => (
+                  <CollectionCard
+                    key={report.rre_id}
+                    report={report}
+                    savedData={savedRatings[report.rre_id.toString()]}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="eco-card text-center py-8">
+                <p className="text-muted-foreground">Aún no tienes recolecciones completadas</p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Empty state */}
+        {!isLoading && reports.length === 0 && (
+          <div className="eco-card text-center py-8">
+            <p className="text-muted-foreground">No tienes recolecciones registradas</p>
+          </div>
+        )}
       </div>
     </MobileLayout>
   );
 }
 
+function CollectionCardSkeleton() {
+  return (
+    <div className="eco-card space-y-3">
+      <div className="flex items-start justify-between">
+        <Skeleton className="h-6 w-20" />
+        <Skeleton className="h-5 w-5" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-48" />
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-4 w-40" />
+      </div>
+    </div>
+  );
+}
+
 interface CollectionCardProps {
-  collection: {
-    id: string;
-    date: string;
-    timeSlot: string;
-    material: string;
-    quantity: string;
-    address: string;
-    status: "pending" | "accepted" | "collected";
-  };
+  report: Report;
   savedData?: { rating: number; tip: number | null };
 }
 
-function CollectionCard({ collection, savedData }: CollectionCardProps) {
-  const status = statusConfig[collection.status];
+function CollectionCard({ report, savedData }: CollectionCardProps) {
+  const [address, setAddress] = useState<string>(report.rre_direccion_texto || "Cargando...");
+
+  const statusKey = report.rre_estado?.toUpperCase() || "PENDIENTE";
+  const status = statusConfig[statusKey] || statusConfig.PENDIENTE;
+  const formattedDate = formatDateToSpanish(report.rre_fecha_reporte);
   const hasRating = savedData?.rating && savedData.rating > 0;
   const hasTip = savedData?.tip !== null && savedData?.tip !== undefined;
 
+  useEffect(() => {
+    if (report.rre_direccion_texto && report.rre_direccion_texto !== "string") {
+      setAddress(report.rre_direccion_texto);
+    } else if (report.rre_ubicacion_lat && report.rre_ubicacion_lng) {
+      reverseGeocode(report.rre_ubicacion_lat, report.rre_ubicacion_lng)
+        .then(setAddress)
+        .catch(() => setAddress("Ubicación no disponible"));
+    }
+  }, [report.rre_direccion_texto, report.rre_ubicacion_lat, report.rre_ubicacion_lng]);
+
   return (
     <Link
-      to={`/collections/${collection.id}`}
+      to={`/collections/${report.rre_id}`}
       className="eco-card block group hover:shadow-elevated transition-shadow duration-200"
     >
       <div className="flex items-start justify-between mb-3">
@@ -182,16 +184,16 @@ function CollectionCard({ collection, savedData }: CollectionCardProps) {
 
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm text-foreground font-medium">
-          <Clock className="w-4 h-4 text-muted-foreground" />
-          <span>{collection.date} · {collection.timeSlot}</span>
+          <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <span>{formattedDate}</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Package className="w-4 h-4" />
-          <span>{collection.material} · {collection.quantity}</span>
+          <Package className="w-4 h-4 flex-shrink-0" />
+          <span>{report.rre_foto_descripcion || "Material reciclable"}</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="w-4 h-4" />
-          <span className="truncate">{collection.address}</span>
+          <MapPin className="w-4 h-4 flex-shrink-0" />
+          <span className="truncate">{address}</span>
         </div>
       </div>
     </Link>
