@@ -1,14 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Camera, X, HelpCircle, ArrowRight, ChevronDown, ChevronUp, Loader2, AlertTriangle, Leaf, Recycle, Package } from "lucide-react";
+import { Camera, X, HelpCircle, ArrowRight, Loader2, AlertTriangle, Leaf, Recycle, Footprints } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Card } from "@/components/ui/card";
 
 type ScanStep = "permission" | "camera" | "processing" | "result";
 
@@ -19,29 +15,29 @@ interface ScanResponse {
   materiales: string[];
 }
 
-// Mock response while endpoint is being developed
+// Mock response - Lenguaje directo e impactante
 const MOCK_RESPONSE: ScanResponse = {
   daño_ambiental: [
-    "Si la botas, tarda siglos.",
-    "La tapa puede terminar en ríos.",
-    "La etiqueta contamina si se mezcla."
+    "Tarda 450 años en desaparecer",
+    "Una tapa puede matar peces y aves",
+    "Mezclada contamina todo lo demás"
   ],
   preparacion: [
-    "Vacíala.",
-    "Enjuaga rápido.",
-    "Aplástala.",
-    "Deja la tapa.",
-    "La etiqueta no es obligatoria quitarla."
+    "Vacíala por completo",
+    "Enjuágala rápido",
+    "Aplástala para ahorrar espacio",
+    "Déjale la tapa puesta",
+    "La etiqueta puede quedarse"
   ],
   impacto_inmediato: [
-    "Evitas algo de CO2.",
-    "Menos basura a Doña Juana.",
-    "Aporta unos pesos al reciclador."
+    "Reduces emisiones de CO2",
+    "Menos basura en los rellenos",
+    "Generas ingresos para recicladores"
   ],
   materiales: [
-    "Botella PET transparente.",
-    "Tapa PP rígida.",
-    "Etiqueta plástica."
+    "Botella PET transparente",
+    "Tapa PP rígida",
+    "Etiqueta plástica"
   ],
 };
 
@@ -53,12 +49,6 @@ export default function ScanPage() {
   const [step, setStep] = useState<ScanStep>("permission");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<ScanResponse | null>(null);
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    daño_ambiental: true,
-    preparacion: false,
-    impacto_inmediato: false,
-    materiales: false,
-  });
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -194,14 +184,10 @@ export default function ScanPage() {
     });
   };
 
-  const toggleSection = (key: string) => {
-    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
   const sectionConfig = [
-    { key: "daño_ambiental", title: "Daño ambiental", icon: AlertTriangle, iconColor: "text-accent" },
-    { key: "preparacion", title: "Preparación", icon: Package, iconColor: "text-primary" },
-    { key: "impacto_inmediato", title: "Impacto inmediato", icon: Leaf, iconColor: "text-primary" },
+    { key: "daño_ambiental", title: "Si no reciclas...", icon: AlertTriangle, iconColor: "text-primary" },
+    { key: "preparacion", title: "Cómo prepararlo", icon: Footprints, iconColor: "text-primary" },
+    { key: "impacto_inmediato", title: "Tu impacto positivo", icon: Leaf, iconColor: "text-primary" },
     { key: "materiales", title: "Materiales detectados", icon: Recycle, iconColor: "text-primary" },
   ];
 
@@ -346,48 +332,52 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* Toggle sections */}
+        {/* Result cards */}
         {scanResult && (
-          <div className="space-y-3 animate-fade-up" style={{ animationDelay: "100ms" }}>
+          <div className="space-y-4 animate-fade-up" style={{ animationDelay: "100ms" }}>
             {sectionConfig.map(({ key, title, icon: Icon, iconColor }) => {
               const items = scanResult[key as keyof ScanResponse];
               if (!items || items.length === 0) return null;
 
+              const isPreparacion = key === "preparacion";
+
               return (
-                <Collapsible
-                  key={key}
-                  open={openSections[key]}
-                  onOpenChange={() => toggleSection(key)}
-                >
-                  <div className="eco-card">
-                    <CollapsibleTrigger className="w-full flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={cn("w-10 h-10 rounded-xl bg-muted flex items-center justify-center", iconColor)}>
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <span className="font-medium text-foreground">{title}</span>
-                      </div>
-                      {openSections[key] ? (
-                        <ChevronUp className="w-5 h-5 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                      )}
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pt-4">
-                      <ul className="space-y-2 pl-13">
-                        {items.map((item, index) => (
-                          <li 
-                            key={index} 
-                            className="flex items-start gap-2 text-sm text-muted-foreground"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CollapsibleContent>
+                <Card key={key} className="p-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={cn("w-10 h-10 rounded-xl bg-eco-green-light flex items-center justify-center", iconColor)}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <span className="font-semibold text-foreground">{title}</span>
                   </div>
-                </Collapsible>
+                  
+                  {isPreparacion ? (
+                    <div className="space-y-3">
+                      {items.map((item, index) => (
+                        <div 
+                          key={index} 
+                          className="flex items-center gap-3"
+                        >
+                          <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold flex-shrink-0">
+                            {index + 1}
+                          </div>
+                          <span className="text-sm text-foreground">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <ul className="space-y-2">
+                      {items.map((item, index) => (
+                        <li 
+                          key={index} 
+                          className="flex items-start gap-2 text-sm text-muted-foreground"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Card>
               );
             })}
           </div>
