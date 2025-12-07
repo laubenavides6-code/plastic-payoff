@@ -1,8 +1,7 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { useAuth } from "./AuthContext";
-import { useToast } from "@/hooks/use-toast";
 
-const API_BASE_URL = "https://ecogiro.jdxico.easypanel.host";
+const REPORTS_STORAGE_KEY = "eco_reports";
 
 export interface Report {
   rre_id: number;
@@ -27,67 +26,96 @@ interface ReportsContextType {
   error: string | null;
   refetchReports: () => Promise<void>;
   upcomingCollection: Report | null;
+  addReport: (reportData: Omit<Report, "rre_id">) => Report;
 }
 
 const ReportsContext = createContext<ReportsContextType | undefined>(undefined);
+
+// Load reports from localStorage
+const loadReportsFromStorage = (userId: number): Report[] => {
+  try {
+    const stored = localStorage.getItem(REPORTS_STORAGE_KEY);
+    if (stored) {
+      const allReports: Report[] = JSON.parse(stored);
+      return allReports.filter((r) => r.usu_ciudadano_id === userId);
+    }
+  } catch (e) {
+    console.error("Error loading reports from storage:", e);
+  }
+  return [];
+};
+
+// Save reports to localStorage
+const saveReportsToStorage = (reports: Report[]) => {
+  try {
+    localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(reports));
+  } catch (e) {
+    console.error("Error saving reports to storage:", e);
+  }
+};
+
+// Get all reports from storage (for adding new ones)
+const getAllReportsFromStorage = (): Report[] => {
+  try {
+    const stored = localStorage.getItem(REPORTS_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error("Error loading all reports from storage:", e);
+  }
+  return [];
+};
 
 export function ReportsProvider({ children }: { children: ReactNode }) {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     if (!user?.user_id) return;
 
     setIsLoading(true);
     setError(null);
 
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/reportes/?usuario_id=${user.user_id}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+    // Load from localStorage
+    const storedReports = loadReportsFromStorage(user.user_id);
+    setReports(storedReports);
+    setIsLoading(false);
+  }, [user?.user_id]);
 
-      const data = await response.json();
+  const addReport = useCallback((reportData: Omit<Report, "rre_id">): Report => {
+    const allReports = getAllReportsFromStorage();
+    
+    // Generate new ID
+    const maxId = allReports.length > 0 
+      ? Math.max(...allReports.map(r => r.rre_id)) 
+      : 0;
+    
+    const newReport: Report = {
+      ...reportData,
+      rre_id: maxId + 1,
+    };
 
-      if (!response.ok) {
-        const errorMessage = data.detail?.[0]?.msg || data.detail || "Error al obtener reportes";
-        setError(errorMessage);
-        toast({
-          variant: "destructive",
-          title: "Error #1",
-          description: errorMessage,
-        });
-        return;
-      }
+    // Add to all reports and save
+    const updatedAllReports = [...allReports, newReport];
+    saveReportsToStorage(updatedAllReports);
 
-      setReports(data);
-    } catch (err) {
-      console.error("Reports fetch error:", err);
-      const errorMessage = "Error de conexión. Intenta de nuevo.";
-      setError(errorMessage);
-      toast({
-        variant: "destructive",
-        title: "Error #1",
-        description: errorMessage,
-      });
-    } finally {
-      setIsLoading(false);
+    // Update state with user's reports
+    if (user?.user_id) {
+      const userReports = updatedAllReports.filter(r => r.usu_ciudadano_id === user.user_id);
+      setReports(userReports);
     }
-  };
+
+    return newReport;
+  }, [user?.user_id]);
 
   useEffect(() => {
     if (isAuthenticated && user?.user_id) {
       fetchReports();
     }
-  }, [isAuthenticated, user?.user_id]);
+  }, [isAuthenticated, user?.user_id, fetchReports]);
 
   // Get the closest upcoming collection
   const upcomingCollection = (() => {
@@ -126,6 +154,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
         error,
         refetchReports: fetchReports,
         upcomingCollection,
+        addReport,
       }}
     >
       {children}

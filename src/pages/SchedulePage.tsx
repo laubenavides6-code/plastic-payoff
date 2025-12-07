@@ -11,8 +11,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useAuth } from "@/contexts/AuthContext";
 import { useReports } from "@/contexts/ReportsContext";
 
-const BASE_URL = "https://ecogiro.jdxico.easypanel.host";
-
 // Default address: El Regalo, Bosa, Bogotá
 const DEFAULT_ADDRESS = "Calle 73 Sur #80C-21, El Regalo, Bosa, Bogotá";
 const DEFAULT_COORDS: [number, number] = [-74.1901, 4.6201];
@@ -48,8 +46,8 @@ const getMaterialTypeId = (material: string): number => {
 export default function SchedulePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, updateUserPoints } = useAuth();
-  const { refetchReports } = useReports();
+  const { user, addPoints } = useAuth();
+  const { addReport, refetchReports } = useReports();
   
   const { material, peso, puntos_otorgados, capturedImage } = location.state || {
     material: "PET",
@@ -91,60 +89,40 @@ export default function SchedulePage() {
 
       // Ensure minimum weight of 0.02kg
       const cantidadKg = Math.max(parseFloat(peso) || 0.02, 0.02);
+      const puntosOtorgados = parseInt(puntos_otorgados) || 0;
 
-      const body = {
-        usuario_ciudadano_id: user.user_id,
-        tipo_material_id: getMaterialTypeId(material),
-        cantidad_kg: cantidadKg,
-        foto_url: capturedImage ? `image_${Date.now()}.jpg` : "",
-        foto_descripcion: comment,
-        ubicacion_lat: addressCoords[1],
-        ubicacion_lng: addressCoords[0],
-        direccion_texto: address,
-        ia_confianza: Math.floor(Math.random() * 11),
-        estado: "PENDIENTE",
-        fecha_reporte: fechaRecoleccion.toISOString(),
-        puntos_otorgados: parseInt(puntos_otorgados) || 0,
+      // Create report in localStorage
+      const reportData = {
+        usu_ciudadano_id: user.user_id,
+        usu_reciclador_id: 0,
+        tma_id: getMaterialTypeId(material),
+        rre_cantidad_kg: cantidadKg.toFixed(2),
+        rre_foto_url: capturedImage ? `image_${Date.now()}.jpg` : "",
+        rre_foto_descripcion: comment,
+        rre_ubicacion_lat: addressCoords[1].toString(),
+        rre_ubicacion_lng: addressCoords[0].toString(),
+        rre_direccion_texto: address,
+        rre_estado: "PENDIENTE",
+        rre_fecha_reporte: fechaRecoleccion.toISOString(),
+        rre_puntos_otorgados: puntosOtorgados,
       };
 
-      const response = await fetch(`${BASE_URL}/reportes/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
+      // Add report to localStorage
+      addReport(reportData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.errors?.[0]?.message || "Error al crear el reporte");
+      // Add points to localStorage
+      if (puntosOtorgados > 0) {
+        addPoints(puntosOtorgados);
       }
 
-      // Refetch reports to update the list
+      // Refresh reports list
       await refetchReports();
-
-      // Fetch updated user data
-      try {
-        const userResponse = await fetch(`${BASE_URL}/usuarios/${user.user_id}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          updateUserPoints(userData.puntos_acumulados);
-        }
-      } catch (userError) {
-        console.error("Error fetching updated user data:", userError);
-      }
 
       toast({
         title: "¡Solicitud enviada! 🎉",
         description: "EcoGiro notificará a un reciclador. Te avisaremos cuando acepte.",
       });
-      navigate("/collections", { state: { refresh: true } });
+      navigate("/collections");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Error al enviar la solicitud";
       toast({
