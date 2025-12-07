@@ -48,15 +48,15 @@ export default function RewardsPage() {
                 <div
                   key={reward.id}
                   className={cn(
-                    "eco-card text-center relative overflow-hidden",
+                    "eco-card text-center relative overflow-hidden flex flex-col",
                     !reward.available && "opacity-80"
                   )}
                 >
                   <div className="text-4xl mb-2">{reward.image}</div>
                   <h3 className="font-medium text-foreground text-sm">{reward.title}</h3>
-                  {reward.subtitle && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{reward.subtitle}</p>
-                  )}
+                  <p className="text-[10px] text-muted-foreground mt-0.5 min-h-[28px]">
+                    {reward.subtitle || "\u00A0"}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">{reward.points} puntos</p>
                   {!reward.available && (
                     <div className="mt-2">
