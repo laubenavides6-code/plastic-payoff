@@ -18,16 +18,16 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: ("ciudadano" | "acopio")[] }) {
+function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: ("CIUDADANO" | "CENTRO_DE_ACOPIO")[] }) {
   const { user, isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && user?.role && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && user?.rol && !allowedRoles.includes(user.rol)) {
     // Redirect to appropriate home based on role
-    if (user.role === "acopio") {
+    if (user.rol === "CENTRO_DE_ACOPIO") {
       return <Navigate to="/campaigns" replace />;
     }
     return <Navigate to="/" replace />;
@@ -41,7 +41,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
   if (isAuthenticated) {
     // Redirect based on role
-    if (user?.role === "acopio") {
+    if (user?.rol === "CENTRO_DE_ACOPIO") {
       return <Navigate to="/campaigns" replace />;
     }
     return <Navigate to="/" replace />;
@@ -57,16 +57,16 @@ function AppRoutes() {
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
 
       {/* Ciudadano routes */}
-      <Route path="/" element={<ProtectedRoute allowedRoles={["ciudadano"]}><HomePage /></ProtectedRoute>} />
-      <Route path="/scan" element={<ProtectedRoute allowedRoles={["ciudadano"]}><ScanPage /></ProtectedRoute>} />
-      <Route path="/schedule" element={<ProtectedRoute allowedRoles={["ciudadano"]}><SchedulePage /></ProtectedRoute>} />
-      <Route path="/collections" element={<ProtectedRoute allowedRoles={["ciudadano"]}><CollectionsPage /></ProtectedRoute>} />
-      <Route path="/collections/:id" element={<ProtectedRoute allowedRoles={["ciudadano"]}><CollectionDetailPage /></ProtectedRoute>} />
-      <Route path="/rewards" element={<ProtectedRoute allowedRoles={["ciudadano"]}><RewardsPage /></ProtectedRoute>} />
-      <Route path="/profile" element={<ProtectedRoute allowedRoles={["ciudadano"]}><ProfilePage /></ProtectedRoute>} />
+      <Route path="/" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><HomePage /></ProtectedRoute>} />
+      <Route path="/scan" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><ScanPage /></ProtectedRoute>} />
+      <Route path="/schedule" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><SchedulePage /></ProtectedRoute>} />
+      <Route path="/collections" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><CollectionsPage /></ProtectedRoute>} />
+      <Route path="/collections/:id" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><CollectionDetailPage /></ProtectedRoute>} />
+      <Route path="/rewards" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><RewardsPage /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><ProfilePage /></ProtectedRoute>} />
 
       {/* Centro de Acopio routes */}
-      <Route path="/campaigns" element={<ProtectedRoute allowedRoles={["acopio"]}><CampaignsPage /></ProtectedRoute>} />
+      <Route path="/campaigns" element={<ProtectedRoute allowedRoles={["CENTRO_DE_ACOPIO"]}><CampaignsPage /></ProtectedRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<NotFound />} />
