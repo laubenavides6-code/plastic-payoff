@@ -143,6 +143,9 @@ export default function ScanPage() {
   };
 
   const handleSchedule = () => {
+    // Scroll to top smoothly
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    
     // Extract average weight from peso_estimado array
     const pesoText = scanResult?.peso_estimado?.find(p => p.toLowerCase().includes("total")) || "";
     const pesoMatch = pesoText.match(/(\d+)\s*a\s*(\d+)/);
@@ -362,7 +365,7 @@ export default function ScanPage() {
                     </div>
                   ) : (
                     <ul className="space-y-2">
-                      {items.map((item, index) => (
+                      {items.slice(0, 3).map((item, index) => (
                         <li key={index} className="flex items-start gap-3 text-sm text-muted-foreground">
                           <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
                           <span>{item}</span>
