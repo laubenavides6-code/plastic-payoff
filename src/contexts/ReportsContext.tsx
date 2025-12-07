@@ -107,7 +107,7 @@ const generateDefaultReports = (userId: number): Report[] => {
 
 // Check if data needs migration (version check)
 const DATA_VERSION_KEY = "eco_data_version";
-const CURRENT_DATA_VERSION = 2;
+const CURRENT_DATA_VERSION = 3;
 
 const needsDataMigration = (): boolean => {
   try {
@@ -214,10 +214,27 @@ const loadReportsFromStorage = (userId: number): Report[] => {
       "COMPLETADO": "RECOGIDO",
     };
     
+    // Migrate dates from Dec 5/6 to Dec 9/12
+    const dec9 = new Date(2025, 11, 9, 10, 0, 0);
+    const dec12 = new Date(2025, 11, 12, 10, 0, 0);
+    
     allReports = allReports.map(report => {
       const upperStatus = report.rre_estado?.toUpperCase() || "EN_ESPERA";
       const newStatus = statusMigration[upperStatus] || upperStatus;
-      return { ...report, rre_estado: newStatus };
+      
+      // Check if date is Dec 5 or 6 and migrate
+      const reportDate = new Date(report.rre_fecha_reporte);
+      let newFechaReporte = report.rre_fecha_reporte;
+      
+      if (reportDate.getFullYear() === 2025 && reportDate.getMonth() === 11) {
+        if (reportDate.getDate() === 5) {
+          newFechaReporte = dec9.toISOString();
+        } else if (reportDate.getDate() === 6) {
+          newFechaReporte = dec12.toISOString();
+        }
+      }
+      
+      return { ...report, rre_estado: newStatus, rre_fecha_reporte: newFechaReporte };
     });
     
     // Save migrated data
