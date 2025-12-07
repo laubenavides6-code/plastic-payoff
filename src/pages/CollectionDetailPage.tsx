@@ -54,20 +54,27 @@ const statusConfig: Record<string, { label: string; description: string; classNa
   RECOGIDO: {
     label: "Recogido",
     description: "¡Gracias por reciclar! Tu impacto hace la diferencia.",
-    className: "bg-muted text-muted-foreground",
-    color: "text-muted-foreground",
+    className: "bg-eco-green-light text-primary",
+    color: "text-primary",
+  },
+  ACEPTADO: {
+    label: "Aceptado",
+    description: "Un reciclador recogerá tu plástico en la franja seleccionada.",
+    className: "bg-eco-green-light text-primary",
+    color: "text-primary",
   },
 };
 
 export default function CollectionDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { reports, isLoading: isLoadingReports } = useReports();
+  const { reports, isLoading: isLoadingReports, deleteReport, refetchReports } = useReports();
 
   const [report, setReport] = useState<Report | null>(null);
   const [address, setAddress] = useState<string>("Cargando dirección...");
   const [comment, setComment] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [rating, setRating] = useState(0);
   const [selectedTip, setSelectedTip] = useState<number | string | null>(null);
   const [customTip, setCustomTip] = useState("");
@@ -153,6 +160,15 @@ export default function CollectionDetailPage() {
   const status = statusConfig[statusKey] || statusConfig.PENDIENTE;
   const formattedDate = formatDateToSpanish(report.rre_fecha_reporte);
   const isCollected = statusKey === "RECOGIDO";
+
+  const handleDeleteReport = async () => {
+    if (!report) return;
+    setIsDeleting(true);
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    deleteReport(report.rre_id);
+    toast.success("Reporte eliminado");
+    navigate("/collections");
+  };
 
   const handleSaveComment = async () => {
     setIsSaving(true);
@@ -367,6 +383,17 @@ export default function CollectionDetailPage() {
             </section>
           </>
         )}
+
+        {/* Delete Button */}
+        <div className="pt-4">
+          <button
+            onClick={handleDeleteReport}
+            disabled={isDeleting}
+            className="w-full py-3 text-destructive font-medium hover:bg-destructive/10 rounded-xl transition-colors disabled:opacity-50"
+          >
+            {isDeleting ? "Eliminando..." : "Eliminar reporte"}
+          </button>
+        </div>
       </div>
     </div>
   );
