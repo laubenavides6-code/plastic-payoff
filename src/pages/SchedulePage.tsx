@@ -46,6 +46,29 @@ export default function SchedulePage() {
     setIsSubmitting(true);
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Get the selected date label
+    const selectedDateObj = availableDates.find(d => d.id === selectedDate);
+    const selectedTimeObj = timeSlots.find(t => t.id === selectedTime);
+
+    // Create new collection
+    const newCollection = {
+      id: `user-${Date.now()}`,
+      date: selectedDateObj?.label || "",
+      timeSlot: selectedTimeObj?.label || "",
+      material,
+      quantity,
+      address,
+      status: "pending" as const,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save to localStorage
+    const COLLECTIONS_KEY = "user_collections";
+    const existingCollections = JSON.parse(localStorage.getItem(COLLECTIONS_KEY) || "[]");
+    existingCollections.unshift(newCollection);
+    localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(existingCollections));
+
     setIsSubmitting(false);
 
     toast({
