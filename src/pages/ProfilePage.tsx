@@ -1,7 +1,7 @@
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { User, Mail, Phone, MapPin, Bell, Calendar, MessageCircle, FileText, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 const mockUser = {
   name: "Laura García",
@@ -110,18 +110,29 @@ interface ToggleRowProps {
 
 function ToggleRow({ icon: Icon, label, description, checked, onChange }: ToggleRowProps) {
   return (
-    <label className="flex items-start gap-3 cursor-pointer">
+    <div className="flex items-start gap-3">
       <Icon className="w-5 h-5 text-muted-foreground mt-0.5" />
       <div className="flex-1">
         <p className="text-foreground font-medium">{label}</p>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
-      <Switch 
-        checked={checked} 
-        onCheckedChange={onChange}
-        aria-label={label}
-      />
-    </label>
+      <button
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={cn(
+          "relative w-11 h-6 rounded-full transition-colors duration-200",
+          checked ? "bg-primary" : "bg-muted"
+        )}
+      >
+        <span
+          className={cn(
+            "absolute top-1 w-4 h-4 rounded-full bg-card shadow-sm transition-transform duration-200",
+            checked ? "translate-x-6" : "translate-x-1"
+          )}
+        />
+      </button>
+    </div>
   );
 }
 
