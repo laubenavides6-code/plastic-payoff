@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Megaphone, Plus, Calendar, DollarSign, Target, LogOut, FileText, CheckCircle } from "lucide-react";
+import { Megaphone, Plus, Calendar, DollarSign, Target, LogOut, FileText, CheckCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import logoEcogiro from "@/assets/logo-ecogiro.png";
 
 interface Campaign {
   id: string;
@@ -130,6 +131,13 @@ export default function CampaignsPage() {
     toast.success("¡Campaña marcada como aceptada!");
   };
 
+  const handleDeleteCampaign = (campaignId: string) => {
+    const updatedCampaigns = campaigns.filter((c) => c.id !== campaignId);
+    setCampaigns(updatedCampaigns);
+    saveCampaigns(updatedCampaigns);
+    toast.success("Campaña eliminada");
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-CO', {
       day: 'numeric',
@@ -142,9 +150,8 @@ export default function CampaignsPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 bg-primary px-5 py-4 flex items-center justify-between z-50">
-        <div>
-          <h1 className="text-xl font-display font-bold text-primary-foreground">Centro de Acopio</h1>
-          <p className="text-sm text-primary-foreground/80">Gestiona tus campañas</p>
+        <div className="flex items-center gap-3">
+          <img src={logoEcogiro} alt="EcoGiro" className="h-8 object-contain brightness-0 invert" />
         </div>
         <button
           onClick={handleLogout}
@@ -159,7 +166,7 @@ export default function CampaignsPage() {
       <div className="px-5 py-6 space-y-6 pb-8">
         <section className="animate-fade-up">
           <h2 className="text-lg font-display font-semibold text-foreground mb-4">
-            Campañas Activas
+            Tus Campañas
           </h2>
 
           {campaigns.length === 0 ? (
@@ -223,17 +230,27 @@ export default function CampaignsPage() {
                         <span>Hasta {formatDate(campaign.endDate)}</span>
                       </div>
                     </div>
-                    {campaign.status === "active" && (
+                    <div className="flex items-center gap-2">
+                      {campaign.status === "active" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleAcceptCampaign(campaign.id)}
+                          className="text-primary hover:bg-eco-green-light hover:text-primary text-xs"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Marcar aceptada
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleAcceptCampaign(campaign.id)}
-                        className="text-primary hover:bg-eco-green-light hover:text-primary text-xs"
+                        onClick={() => handleDeleteCampaign(campaign.id)}
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive text-xs"
                       >
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Marcar aceptada
+                        <Trash2 className="w-4 h-4" />
                       </Button>
-                    )}
+                    </div>
                   </div>
                 </div>
               ))}
