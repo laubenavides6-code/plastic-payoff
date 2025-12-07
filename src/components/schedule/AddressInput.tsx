@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { MapPin, Map, X, Search } from "lucide-react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -289,18 +290,21 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
         <span className="text-sm font-medium">Seleccionar en el mapa</span>
       </button>
 
-      {/* Map Modal */}
-      {showMapModal && (
+      {/* Map Modal - using portal to render at document body level */}
+      {showMapModal && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 z-[9999]"
-            style={{ backgroundColor: "rgba(0, 0, 0, 0.4)" }}
+            className="fixed inset-0"
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.4)", zIndex: 9999 }}
             onClick={handleCloseModal}
           />
           
           {/* Modal Container - using same padding as screens (16px/1rem) */}
-          <div className="relative z-[10000] w-full mx-4 bg-card rounded-2xl overflow-hidden shadow-elevated animate-scale-in flex flex-col max-h-[85vh]">
+          <div 
+            className="relative w-full mx-4 bg-card rounded-2xl overflow-hidden shadow-elevated animate-scale-in flex flex-col max-h-[85vh]"
+            style={{ zIndex: 10000 }}
+          >
             {/* Modal content with 16px padding */}
             <div className="p-4">
               {/* Close button */}
@@ -371,7 +375,8 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
