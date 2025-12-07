@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Clock, MapPin, Package, MessageSquare, Star, DollarSign, Trash2, Edit3 } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, FileText, MessageSquare, Star, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useReports, Report } from "@/contexts/ReportsContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 const tipOptions = [
   { value: 2000, label: "$2.000" },
@@ -16,7 +19,6 @@ const tipOptions = [
 
 // Helper functions for localStorage persistence
 const STORAGE_KEY = "collection_ratings";
-const COLLECTIONS_KEY = "user_collections";
 
 const getSavedRatings = (): Record<string, { rating: number; tip: number | null }> => {
   try {
@@ -36,45 +38,20 @@ const saveRating = (collectionId: string, data: { rating?: number; tip?: number 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
 };
 
-interface Collection {
-  id: string;
-  date: string;
-  timeSlot: string;
-  material: string;
-  quantity: string;
-  address: string;
-  status: "pending" | "accepted" | "collected";
-  comment?: string;
-  createdAt?: string;
-}
-
-const getUserCollections = (): Collection[] => {
-  try {
-    const stored = localStorage.getItem(COLLECTIONS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveUserCollections = (collections: Collection[]) => {
-  localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections));
-};
-
-const statusConfig = {
-  pending: {
+const statusConfig: Record<string, { label: string; description: string; className: string; color: string }> = {
+  pendiente: {
     label: "En espera de respuesta",
     description: "Un reciclador revisará tu solicitud pronto.",
     className: "bg-eco-yellow-light text-foreground",
     color: "text-eco-yellow",
   },
-  accepted: {
+  aceptado: {
     label: "Aceptada",
     description: "Un reciclador recogerá tu plástico en la franja seleccionada.",
     className: "bg-eco-green-light text-primary",
     color: "text-primary",
   },
-  collected: {
+  recolectado: {
     label: "Recolectada",
     description: "¡Gracias por reciclar! Tu impacto hace la diferencia.",
     className: "bg-muted text-muted-foreground",
@@ -82,51 +59,27 @@ const statusConfig = {
   },
 };
 
-// Mock data for static collections
-const mockCollections: Record<string, Collection> = {
-  "1": {
-    id: "1",
-    date: "Domingo 7 diciembre",
-    timeSlot: "14:00 - 17:00",
-    material: "PET",
-    quantity: "3 kg",
-    address: "Cra 15 #82-45, Chapinero, Bogotá",
-    status: "accepted",
-    comment: "",
-  },
-  "2": {
-    id: "2",
-    date: "Jueves 27 noviembre",
-    timeSlot: "11:00 - 14:00",
-    material: "PP",
-    quantity: "2 kg",
-    address: "Cra 15 #82-45, Chapinero, Bogotá",
-    status: "collected",
-    comment: "",
-  },
-  "3": {
-    id: "3",
-    date: "Lunes 3 noviembre",
-    timeSlot: "8:00 - 11:00",
-    material: "HDPE",
-    quantity: "4 kg",
-    address: "Cra 15 #82-45, Chapinero, Bogotá",
-    status: "collected",
-    comment: "",
-  },
+// Format date from ISO to "Domingo 7 diciembre - 14:00"
+const formatReportDate = (isoDate: string): string => {
+  try {
+    const date = new Date(isoDate);
+    const dayName = format(date, "EEEE", { locale: es });
+    const dayNumber = format(date, "d", { locale: es });
+    const month = format(date, "MMMM", { locale: es });
+    const time = format(date, "HH:mm", { locale: es });
+    return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${dayNumber} ${month} - ${time}`;
+  } catch {
+    return isoDate;
+  }
 };
-
-const timeSlots = [
-  { id: "morning", label: "8:00 - 11:00" },
-  { id: "midday", label: "11:00 - 14:00" },
-  { id: "afternoon", label: "14:00 - 17:00" },
-];
 
 export default function CollectionDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  
-  const [collection, setCollection] = useState<Collection | null>(null);
+  const { reports, isLoading: reportsLoading } = useReports();
+
+  const [report, setReport] = useState<Report | null>(null);
+  const [address, setAddress] = useState("Cargando dirección...");
   const [comment, setComment] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [rating, setRating] = useState(0);
@@ -135,40 +88,52 @@ export default function CollectionDetailPage() {
   const [hasRated, setHasRated] = useState(false);
   const [hasTipped, setHasTipped] = useState(false);
   const [savedTipAmount, setSavedTipAmount] = useState<number | null>(null);
-  const [canModify, setCanModify] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [newTimeSlot, setNewTimeSlot] = useState("");
 
-  // Load collection data
+  // Find report by id
   useEffect(() => {
-    if (!id) return;
-
-    // First check user collections
-    const userCollections = getUserCollections();
-    const userCollection = userCollections.find(c => c.id === id);
-
-    if (userCollection) {
-      setCollection(userCollection);
-      setComment(userCollection.comment || "");
-      
-      // Check if can modify (within 10 minutes of creation)
-      if (userCollection.createdAt && userCollection.status === "pending") {
-        const createdAt = new Date(userCollection.createdAt);
-        const now = new Date();
-        const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-        setCanModify(diffMinutes <= 10);
-      }
-    } else if (mockCollections[id]) {
-      setCollection(mockCollections[id]);
-      setComment(mockCollections[id].comment || "");
+    if (!id || reportsLoading) return;
+    const found = reports.find((r) => r.rre_id.toString() === id);
+    if (found) {
+      setReport(found);
     }
-  }, [id]);
+  }, [id, reports, reportsLoading]);
+
+  // Resolve address
+  useEffect(() => {
+    if (!report) return;
+
+    if (report.rre_direccion_texto) {
+      setAddress(report.rre_direccion_texto);
+    } else if (report.rre_ubicacion_lat && report.rre_ubicacion_lng) {
+      const fetchAddress = async () => {
+        try {
+          const lat = parseFloat(report.rre_ubicacion_lat);
+          const lng = parseFloat(report.rre_ubicacion_lng);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+            );
+            const data = await response.json();
+            if (data.display_name) {
+              const shortAddress = data.display_name.split(",").slice(0, 3).join(", ");
+              setAddress(shortAddress);
+            }
+          }
+        } catch {
+          setAddress("Dirección no disponible");
+        }
+      };
+      fetchAddress();
+    } else {
+      setAddress("Dirección no disponible");
+    }
+  }, [report]);
 
   // Load saved rating data
   useEffect(() => {
-    if (!collection) return;
-    
-    const savedData = getSavedRatings()[collection.id];
+    if (!report) return;
+
+    const savedData = getSavedRatings()[report.rre_id.toString()];
     if (savedData) {
       if (savedData.rating) {
         setRating(savedData.rating);
@@ -180,21 +145,42 @@ export default function CollectionDetailPage() {
         setHasTipped(true);
       }
     }
-  }, [collection]);
+  }, [report]);
 
-  if (!collection) {
+  if (reportsLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Cargando...</p>
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-50">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+          <h1 className="text-lg font-display font-semibold text-foreground">Detalle de recolección</h1>
+        </header>
+        <div className="px-5 py-6 space-y-6">
+          <Skeleton className="h-10 w-40 mx-auto" />
+          <Skeleton className="h-32 w-full rounded-2xl" />
+        </div>
       </div>
     );
   }
 
-  const status = statusConfig[collection.status];
+  if (!report) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Recolección no encontrada</p>
+      </div>
+    );
+  }
+
+  const status = statusConfig[report.rre_estado] || statusConfig.pendiente;
+  const formattedDate = formatReportDate(report.rre_fecha_reporte);
 
   const handleSaveComment = async () => {
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     setIsSaving(false);
     toast.success("Comentario guardado");
   };
@@ -205,60 +191,26 @@ export default function CollectionDetailPage() {
       return;
     }
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    saveRating(collection.id, { rating });
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    saveRating(report.rre_id.toString(), { rating });
     setIsSaving(false);
     setHasRated(true);
     toast.success("¡Gracias por tu calificación!");
   };
 
   const handleSendTip = async () => {
-    const tipAmount = selectedTip === "custom" ? parseInt(customTip) : selectedTip as number;
+    const tipAmount = selectedTip === "custom" ? parseInt(customTip) : (selectedTip as number);
     if (!tipAmount || tipAmount <= 0) {
       toast.error("Por favor ingresa un monto válido");
       return;
     }
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    saveRating(collection.id, { tip: tipAmount });
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    saveRating(report.rre_id.toString(), { tip: tipAmount });
     setIsSaving(false);
     setHasTipped(true);
     setSavedTipAmount(tipAmount);
     toast.success("¡Propina enviada al reciclador!");
-  };
-
-  const handleCancelCollection = async () => {
-    if (!window.confirm("¿Estás seguro de que quieres cancelar esta recolección?")) {
-      return;
-    }
-
-    const userCollections = getUserCollections();
-    const filtered = userCollections.filter(c => c.id !== collection.id);
-    saveUserCollections(filtered);
-    
-    toast.success("Recolección cancelada");
-    navigate("/collections");
-  };
-
-  const handleUpdateTimeSlot = async () => {
-    if (!newTimeSlot) {
-      toast.error("Por favor selecciona un horario");
-      return;
-    }
-
-    const userCollections = getUserCollections();
-    const updatedCollections = userCollections.map(c => {
-      if (c.id === collection.id) {
-        const slotLabel = timeSlots.find(t => t.id === newTimeSlot)?.label || c.timeSlot;
-        return { ...c, timeSlot: slotLabel };
-      }
-      return c;
-    });
-
-    saveUserCollections(updatedCollections);
-    setCollection({ ...collection, timeSlot: timeSlots.find(t => t.id === newTimeSlot)?.label || collection.timeSlot });
-    setShowEditModal(false);
-    toast.success("Horario actualizado");
   };
 
   return (
@@ -290,56 +242,22 @@ export default function CollectionDetailPage() {
         {/* Details */}
         <section className="eco-card space-y-4 animate-fade-up" style={{ animationDelay: "50ms" }}>
           <h2 className="font-display font-semibold text-foreground">Resumen</h2>
-          
+
           <div className="space-y-3">
             <DetailRow icon={Clock} label="Fecha y hora">
-              {collection.date} · {collection.timeSlot}
+              {formattedDate}
             </DetailRow>
-            <DetailRow icon={Package} label="Material">
-              <span className="eco-badge eco-badge-green mr-2">{collection.material}</span>
-              {collection.quantity}
+            <DetailRow icon={FileText} label="Descripción">
+              {report.rre_foto_descripcion || "Sin descripción"}
             </DetailRow>
             <DetailRow icon={MapPin} label="Dirección">
-              {collection.address}
+              {address}
             </DetailRow>
           </div>
         </section>
 
-        {/* Actions for pending user collections */}
-        {collection.status === "pending" && collection.id.startsWith("user-") && (
-          <section className="eco-card space-y-3 animate-fade-up" style={{ animationDelay: "75ms" }}>
-            <h2 className="font-display font-semibold text-foreground">Acciones</h2>
-            
-            {canModify && (
-              <Button
-                onClick={() => setShowEditModal(true)}
-                variant="outline"
-                className="w-full flex items-center justify-center gap-2 bg-card hover:bg-eco-green-light hover:text-primary hover:border-primary/50"
-              >
-                <Edit3 className="w-4 h-4" />
-                Modificar horario
-              </Button>
-            )}
-
-            {!canModify && (
-              <p className="text-xs text-muted-foreground text-center">
-                El tiempo para modificar el horario ha expirado (máximo 10 minutos después de crear la solicitud).
-              </p>
-            )}
-
-            <Button
-              onClick={handleCancelCollection}
-              variant="destructive"
-              className="w-full flex items-center justify-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Cancelar recolección
-            </Button>
-          </section>
-        )}
-
         {/* Comment Section - Only for pending/accepted */}
-        {collection.status !== "collected" && (
+        {report.rre_estado !== "recolectado" && (
           <section className="eco-card space-y-3 animate-fade-up" style={{ animationDelay: "100ms" }}>
             <div className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-muted-foreground" />
@@ -351,18 +269,14 @@ export default function CollectionDetailPage() {
               placeholder="Ej: Tocar el timbre del apto 301, dejar en portería..."
               className="eco-input min-h-[80px] resize-none"
             />
-            <Button 
-              onClick={handleSaveComment} 
-              disabled={isSaving}
-              className="w-full eco-button-primary"
-            >
+            <Button onClick={handleSaveComment} disabled={isSaving} className="w-full eco-button-primary">
               {isSaving ? "Guardando..." : "Guardar comentario"}
             </Button>
           </section>
         )}
 
         {/* Rating & Tip Section - Only for collected */}
-        {collection.status === "collected" && (
+        {report.rre_estado === "recolectado" && (
           <>
             {/* Star Rating */}
             <section className="eco-card space-y-4 animate-fade-up" style={{ animationDelay: "100ms" }}>
@@ -370,7 +284,7 @@ export default function CollectionDetailPage() {
                 <Star className="w-5 h-5 text-muted-foreground" />
                 <h2 className="font-display font-semibold text-foreground">Califica al reciclador</h2>
               </div>
-              
+
               {hasRated ? (
                 <div className="text-center py-4">
                   <div className="flex justify-center gap-1 mb-2">
@@ -398,14 +312,16 @@ export default function CollectionDetailPage() {
                         <Star
                           className={cn(
                             "w-9 h-9 transition-colors",
-                            star <= rating ? "fill-eco-yellow text-eco-yellow" : "text-muted-foreground hover:text-eco-yellow/50"
+                            star <= rating
+                              ? "fill-eco-yellow text-eco-yellow"
+                              : "text-muted-foreground hover:text-eco-yellow/50"
                           )}
                         />
                       </button>
                     ))}
                   </div>
-                  <Button 
-                    onClick={handleSubmitRating} 
+                  <Button
+                    onClick={handleSubmitRating}
                     disabled={isSaving || rating === 0}
                     className="w-full eco-button-primary"
                   >
@@ -431,7 +347,7 @@ export default function CollectionDetailPage() {
                     <DollarSign className="w-6 h-6 text-primary" />
                   </div>
                   <p className="text-foreground font-semibold mb-1">
-                    ${savedTipAmount?.toLocaleString('es-CO')}
+                    ${savedTipAmount?.toLocaleString("es-CO")}
                   </p>
                   <p className="text-muted-foreground text-sm">¡Propina enviada! Gracias por tu generosidad.</p>
                 </div>
@@ -453,7 +369,7 @@ export default function CollectionDetailPage() {
                       </button>
                     ))}
                   </div>
-                  
+
                   {selectedTip === "custom" && (
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
@@ -466,9 +382,9 @@ export default function CollectionDetailPage() {
                       />
                     </div>
                   )}
-                  
-                  <Button 
-                    onClick={handleSendTip} 
+
+                  <Button
+                    onClick={handleSendTip}
                     disabled={isSaving || !selectedTip || (selectedTip === "custom" && !customTip)}
                     className="w-full eco-button-primary"
                   >
@@ -480,46 +396,6 @@ export default function CollectionDetailPage() {
           </>
         )}
       </div>
-
-      {/* Edit Time Slot Modal */}
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="sm:max-w-md mx-4 rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="font-display text-xl">Modificar horario</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 mt-4">
-            <p className="text-sm text-muted-foreground">
-              Selecciona un nuevo horario para tu recolección:
-            </p>
-
-            <div className="space-y-2">
-              {timeSlots.map((slot) => (
-                <button
-                  key={slot.id}
-                  onClick={() => setNewTimeSlot(slot.id)}
-                  className={cn(
-                    "w-full py-3 px-4 rounded-xl border-2 font-medium transition-all text-left",
-                    newTimeSlot === slot.id
-                      ? "border-primary bg-eco-green-light text-primary"
-                      : "border-border bg-card text-foreground hover:border-primary/50"
-                  )}
-                >
-                  {slot.label}
-                </button>
-              ))}
-            </div>
-
-            <Button
-              onClick={handleUpdateTimeSlot}
-              className="w-full eco-button-primary"
-              disabled={!newTimeSlot}
-            >
-              Guardar cambios
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
@@ -534,9 +410,9 @@ function DetailRow({ icon: Icon, label, children }: DetailRowProps) {
   return (
     <div className="flex items-start gap-3">
       <Icon className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
-        <div className="text-foreground">{children}</div>
+      <div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-foreground font-medium">{children}</p>
       </div>
     </div>
   );
