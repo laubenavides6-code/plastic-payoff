@@ -123,10 +123,11 @@ export default function CollectionDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-10">
+      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-50 relative">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors"
+          className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors relative z-10"
+          aria-label="Volver"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
