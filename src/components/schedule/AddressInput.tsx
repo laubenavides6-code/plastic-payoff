@@ -10,7 +10,7 @@ const MAPBOX_STYLE = "mapbox://styles/mapbox/streets-v12";
 
 interface AddressInputProps {
   value: string;
-  onChange: (address: string) => void;
+  onChange: (address: string, coords?: [number, number]) => void;
 }
 
 interface Suggestion {
@@ -90,7 +90,7 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
 
   const handleSuggestionClick = (suggestion: Suggestion) => {
     setInputValue(suggestion.place_name);
-    onChange(suggestion.place_name);
+    onChange(suggestion.place_name, suggestion.center);
     setSuggestions([]);
     setShowSuggestions(false);
   };
@@ -211,9 +211,9 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
 
   // Handle confirm address
   const handleConfirmAddress = () => {
-    if (modalAddress) {
+    if (modalAddress && currentCoordsRef.current) {
       setInputValue(modalAddress);
-      onChange(modalAddress);
+      onChange(modalAddress, currentCoordsRef.current);
     }
     setShowMapModal(false);
     setModalAddress("");

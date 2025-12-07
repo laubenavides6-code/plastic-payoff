@@ -14,6 +14,7 @@ interface ScanResponse {
   impacto_inmediato: string[];
   materiales: string[];
   peso: string;
+  puntos_otorgados: string;
 }
 
 // Mock response - Lenguaje directo e impactante
@@ -41,6 +42,7 @@ const MOCK_RESPONSE: ScanResponse = {
     "Mezclada contamina todo lo demás"
   ],
   peso: "0.35",
+  puntos_otorgados: "15",
 };
 
 const BASE_URL = "https://ecogiro.jdxico.easypanel.host";
@@ -182,7 +184,12 @@ export default function ScanPage() {
 
   const handleSchedule = () => {
     navigate("/schedule", {
-      state: { material: scanResult?.materiales?.[0] || "Material reciclable" },
+      state: { 
+        material: scanResult?.materiales?.[0] || "Material reciclable",
+        peso: scanResult?.peso || "0",
+        puntos_otorgados: scanResult?.puntos_otorgados || "0",
+        capturedImage: capturedImage,
+      },
     });
   };
 
@@ -337,11 +344,18 @@ export default function ScanPage() {
         {/* Weight display */}
         {scanResult?.peso && (
           <div className="animate-fade-up" style={{ animationDelay: "50ms" }}>
-            <Card className="p-4 text-center">
-              <p className="text-3xl font-bold text-foreground">{scanResult.peso} kg</p>
-              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full mt-1 inline-block">
-                Aproximado
-              </span>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-eco-green-light flex items-center justify-center">
+                  <Package className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex flex-col items-start">
+                  <p className="text-2xl font-bold text-primary">{scanResult.peso} kg</p>
+                  <span className="text-[10px] text-muted-foreground/70">
+                    Aproximado
+                  </span>
+                </div>
+              </div>
             </Card>
           </div>
         )}
