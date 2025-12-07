@@ -11,8 +11,8 @@ const tabs = [
 
 export function TabBar() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-elevated z-50">
-      <div className="max-w-md mx-auto flex items-center justify-around py-2 px-4 safe-area-pb">
+    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-elevated z-50 pb-[env(safe-area-inset-bottom)]">
+      <div className="max-w-md mx-auto flex items-center justify-around py-2 px-4">
         {tabs.map((tab) => (
           <NavLink
             key={tab.path}
