@@ -45,7 +45,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/reportes?usuario_id=${user.user_id}`,
+        `${API_BASE_URL}/reportes/?usuario_id=${user.user_id}`,
         {
           method: "GET",
           headers: {
