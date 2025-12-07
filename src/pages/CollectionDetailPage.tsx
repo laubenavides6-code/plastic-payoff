@@ -502,7 +502,7 @@ export default function CollectionDetailPage() {
                     "w-full py-3 px-4 rounded-xl border-2 font-medium transition-all text-left",
                     newTimeSlot === slot.id
                       ? "border-primary bg-eco-green-light text-primary"
-                      : "border-border bg-background text-foreground hover:border-primary/50"
+                      : "border-border bg-card text-foreground hover:border-primary/50"
                   )}
                 >
                   {slot.label}
