@@ -43,8 +43,8 @@ export default function CollectionsPage() {
     setSavedRatings(getSavedRatings());
   }, []);
 
-  // Filter reports by status
-  const upcoming = reports.filter((r) => r.rre_estado !== "RECOGIDO");
+  // Filter reports by status - only PENDIENTE and RECOGIDO
+  const upcoming = reports.filter((r) => r.rre_estado === "PENDIENTE");
   const history = reports.filter((r) => r.rre_estado === "RECOGIDO");
 
   return (
