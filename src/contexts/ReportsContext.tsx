@@ -107,6 +107,22 @@ const loadReportsFromStorage = (userId: number): Report[] => {
       markAsInitialized(userId);
     }
     
+    // Migrate old statuses to new ones
+    const statusMigration: Record<string, string> = {
+      "PENDIENTE": "EN_ESPERA",
+      "ASIGNADO": "ACEPTADO",
+      "COMPLETADO": "RECOGIDO",
+    };
+    
+    allReports = allReports.map(report => {
+      const upperStatus = report.rre_estado?.toUpperCase() || "EN_ESPERA";
+      const newStatus = statusMigration[upperStatus] || upperStatus;
+      return { ...report, rre_estado: newStatus };
+    });
+    
+    // Save migrated data
+    saveReportsToStorage(allReports);
+    
     return allReports.filter((r) => r.usu_ciudadano_id === userId);
   } catch (e) {
     console.error("Error loading reports from storage:", e);
