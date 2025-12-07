@@ -21,7 +21,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = "http://54.227.255.141:54322";
+const API_BASE_URL = "https://ecogiro.jdxico.easypanel.host";
 const AUTH_STORAGE_KEY = "eco_auth_user";
 
 const formatRole = (rol: string): UserRole => {
