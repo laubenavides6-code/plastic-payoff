@@ -281,13 +281,14 @@ export default function CollectionDetailPage() {
                       <Star
                         key={star}
                         className={cn(
-                          "w-7 h-7",
+                          "w-7 h-7 flex-shrink-0",
                           star <= rating ? "fill-eco-yellow text-eco-yellow" : "text-muted-foreground"
                         )}
+                        style={{ width: 28, height: 28 }}
                       />
                     ))}
                   </div>
-                  <p className="text-primary" style={{ fontSize: "10px" }}>Calificación enviada</p>
+                  <p className="text-primary" style={{ fontSize: "12px" }}>Calificación enviada</p>
                 </div>
               ) : (
                 <>
@@ -300,11 +301,12 @@ export default function CollectionDetailPage() {
                       >
                         <Star
                           className={cn(
-                            "w-9 h-9 transition-colors",
+                            "flex-shrink-0 transition-colors",
                             star <= rating
                               ? "fill-eco-yellow text-eco-yellow"
                               : "text-muted-foreground hover:text-eco-yellow/50"
                           )}
+                          style={{ width: 36, height: 36 }}
                         />
                       </button>
                     ))}
@@ -338,52 +340,40 @@ export default function CollectionDetailPage() {
                   <p className="text-foreground font-semibold mb-1">
                     ${savedTipAmount?.toLocaleString("es-CO")}
                   </p>
-                  <p className="text-primary" style={{ fontSize: "10px" }}>Donación enviada</p>
+                  <p className="text-primary" style={{ fontSize: "12px" }}>Donación enviada</p>
                 </div>
               ) : (
                 <>
                   <div className="space-y-2">
                     {[2000, 5000, 10000].map((amount) => (
-                      <label
+                      <button
                         key={amount}
+                        type="button"
+                        onClick={() => setSelectedTip(amount)}
                         className={cn(
-                          "flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors",
+                          "w-full flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors text-left",
                           selectedTip === amount 
                             ? "border-primary bg-primary/5" 
                             : "border-border bg-card hover:border-muted-foreground/50"
                         )}
                       >
-                        <input
-                          type="radio"
-                          name="donation"
-                          value={amount}
-                          checked={selectedTip === amount}
-                          onChange={() => setSelectedTip(amount)}
-                          className="w-4 h-4 accent-primary"
-                        />
                         <span className="text-foreground font-medium">
                           ${amount.toLocaleString("es-CO")}
                         </span>
-                      </label>
+                      </button>
                     ))}
-                    <label
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTip("custom")}
                       className={cn(
-                        "flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors",
+                        "w-full flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors text-left",
                         selectedTip === "custom" 
                           ? "border-primary bg-primary/5" 
                           : "border-border bg-card hover:border-muted-foreground/50"
                       )}
                     >
-                      <input
-                        type="radio"
-                        name="donation"
-                        value="custom"
-                        checked={selectedTip === "custom"}
-                        onChange={() => setSelectedTip("custom")}
-                        className="w-4 h-4 accent-primary"
-                      />
                       <span className="text-foreground font-medium">Otro monto</span>
-                    </label>
+                    </button>
                   </div>
 
                   {selectedTip === "custom" && (
@@ -409,16 +399,17 @@ export default function CollectionDetailPage() {
                 </>
               )}
 
-              {/* Delete button inside the card */}
-              <button
-                onClick={handleDeleteReport}
-                disabled={isDeleting}
-                className="w-full py-3 text-destructive font-medium hover:bg-destructive/10 rounded-xl transition-colors disabled:opacity-50 mt-4"
-                style={{ fontSize: "14px" }}
-              >
-                {isDeleting ? "Eliminando..." : "Eliminar recolección"}
-              </button>
             </section>
+
+            {/* Delete button outside the card */}
+            <button
+              onClick={handleDeleteReport}
+              disabled={isDeleting}
+              className="w-full py-3 text-destructive font-medium border-2 border-destructive rounded-xl hover:bg-destructive/10 transition-colors disabled:opacity-50"
+              style={{ fontSize: "14px" }}
+            >
+              {isDeleting ? "Eliminando..." : "Eliminar recolección"}
+            </button>
           </>
         )}
       </div>

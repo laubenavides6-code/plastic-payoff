@@ -136,8 +136,8 @@ export default function ScanPage() {
           setScanResult(result);
           setStep("result");
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Error al procesar la imagen";
-          toast.error(errorMessage);
+          console.error("Scan error:", error);
+          toast.error("El scanner falló. Por favor, intenta de nuevo.");
           setStep("camera");
           startCamera();
         }
@@ -238,7 +238,11 @@ export default function ScanPage() {
               <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-2xl" />
             </div>
 
-            <button className="mt-8 p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors">
+            <p className="mt-4 text-muted-foreground/80 drop-shadow-lg" style={{ fontSize: "10px" }}>
+              Asegurate que solo se vean los residuos que quieras escannear para mejores resultados
+            </p>
+
+            <button className="mt-4 p-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors">
               <HelpCircle className="w-6 h-6 drop-shadow-lg" />
             </button>
           </div>
@@ -271,25 +275,27 @@ export default function ScanPage() {
 
   if (step === "processing") {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center">
-        <div className="w-24 h-24 rounded-3xl bg-eco-green-light flex items-center justify-center mb-6 animate-pulse">
-          <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        </div>
-        <h1 className="text-2xl font-display font-bold text-foreground mb-3">
-          Analizando tu plástico
-        </h1>
-        <p className="text-muted-foreground">
-          Estamos procesando la imagen...
-        </p>
-        {capturedImage && (
-          <div className="mt-6 w-32 h-32 rounded-2xl overflow-hidden border-2 border-primary/20">
-            <img 
-              src={capturedImage} 
-              alt="Procesando" 
-              className="w-full h-full object-cover opacity-70"
-            />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center" style={{ minHeight: "100dvh" }}>
+        <div className="flex flex-col items-center justify-center flex-1">
+          <div className="w-24 h-24 rounded-3xl bg-eco-green-light flex items-center justify-center mb-6 animate-pulse">
+            <Loader2 className="w-12 h-12 text-primary animate-spin" />
           </div>
-        )}
+          <h1 className="text-2xl font-display font-bold text-foreground mb-3">
+            Analizando tu plástico
+          </h1>
+          <p className="text-muted-foreground">
+            Estamos procesando la imagen...
+          </p>
+          {capturedImage && (
+            <div className="mt-6 w-32 h-32 rounded-2xl overflow-hidden border-2 border-primary/20">
+              <img 
+                src={capturedImage} 
+                alt="Procesando" 
+                className="w-full h-full object-cover opacity-70"
+              />
+            </div>
+          )}
+        </div>
       </div>
     );
   }
