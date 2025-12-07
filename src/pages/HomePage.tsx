@@ -11,11 +11,11 @@ const mockUser = {
 
 const mockCollection = {
   id: "1",
-  date: "Mañana",
+  date: "Domingo 7 diciembre",
   timeSlot: "14:00 - 17:00",
   material: "PET",
   quantity: "3 kg",
-  address: "Cra 15 #82-45, Chapinero",
+  address: "Cra 15 #82-45, Chapinero, Bogotá",
   status: "accepted" as const,
 };
 
