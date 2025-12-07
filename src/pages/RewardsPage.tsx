@@ -2,6 +2,7 @@ import { MobileLayout } from "@/components/layout/MobileLayout";
 import { Leaf, Gift, Award, Sparkles, Recycle, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
 
 const mockData = {
   rewards: [
@@ -24,8 +25,8 @@ const mockData = {
 };
 
 export default function RewardsPage() {
-  const { user } = useAuth();
-  const userPoints = user?.puntos_acumulados || 0;
+  const { getTotalPoints } = useAuth();
+  const userPoints = getTotalPoints();
 
   return (
     <MobileLayout>
@@ -33,7 +34,7 @@ export default function RewardsPage() {
         {/* Points header */}
         <header className="text-center animate-fade-up">
           <div className="w-20 h-20 rounded-3xl bg-eco-green-light flex items-center justify-center mx-auto mb-4">
-            <Leaf className="w-10 h-10 text-primary" />
+            <Leaf className="w-10 h-10 text-primary" strokeWidth={1.5} />
           </div>
           <p className="text-muted-foreground text-sm">Tus eco-puntos</p>
           <h1 className="text-5xl font-display font-bold text-foreground">{userPoints}</h1>
@@ -52,7 +53,7 @@ export default function RewardsPage() {
                 <div
                   key={reward.id}
                   className={cn(
-                    "eco-card text-center relative overflow-hidden flex flex-col",
+                    "eco-card text-center relative overflow-hidden flex flex-col h-full",
                     !isAvailable && "opacity-80"
                   )}
                 >
@@ -61,20 +62,22 @@ export default function RewardsPage() {
                   <p className="text-[10px] text-muted-foreground mt-0.5 min-h-[28px]">
                     {reward.subtitle || "\u00A0"}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">{reward.points} puntos</p>
-                  {!isAvailable && (
-                    <div className="mt-2">
-                      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-primary rounded-full transition-all duration-300"
-                          style={{ width: `${progress}%` }}
-                        />
+                  <div className="mt-auto pt-2">
+                    <p className="text-xs text-muted-foreground">{reward.points} puntos</p>
+                    {!isAvailable && (
+                      <div className="mt-2">
+                        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary rounded-full transition-all duration-300"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] text-primary font-medium mt-1 block">
+                          ¡Te faltan {pointsNeeded} puntos!
+                        </span>
                       </div>
-                      <span className="text-[10px] text-primary font-medium mt-1 block">
-                        ¡Te faltan {pointsNeeded} puntos!
-                      </span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -86,25 +89,25 @@ export default function RewardsPage() {
           <h2 className="eco-section-title">Medallas</h2>
           <div className="grid grid-cols-2 gap-3">
             {mockData.medals.map((medal) => (
-              <div
-                key={medal.id}
-                className={cn(
-                  "eco-card flex items-center gap-3",
-                  !medal.unlocked && "opacity-50"
-                )}
-              >
                 <div
+                  key={medal.id}
                   className={cn(
-                    "w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl flex items-center justify-center",
-                    medal.unlocked ? "bg-eco-green-light" : "bg-muted"
+                    "eco-card flex items-center gap-3",
+                    !medal.unlocked && "opacity-50"
                   )}
                 >
-                  {medal.unlocked ? (
-                    <medal.icon className="w-6 h-6 text-primary" />
-                  ) : (
-                    <Lock className="w-5 h-5 text-muted-foreground" />
-                  )}
-                </div>
+                  <div
+                    className={cn(
+                      "w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl flex items-center justify-center",
+                      medal.unlocked ? "bg-eco-green-light" : "bg-muted"
+                    )}
+                  >
+                    {medal.unlocked ? (
+                      <medal.icon className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                    ) : (
+                      <Lock className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                    )}
+                  </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-foreground text-sm truncate">{medal.title}</h3>
                   <p className="text-xs text-muted-foreground truncate">

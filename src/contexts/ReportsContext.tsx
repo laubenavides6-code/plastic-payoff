@@ -2,6 +2,7 @@ import { createContext, useContext, useState, ReactNode, useEffect, useCallback 
 import { useAuth } from "./AuthContext";
 
 const REPORTS_STORAGE_KEY = "eco_reports";
+const FIRST_TIME_KEY = "eco_first_time_initialized";
 
 export interface Report {
   rre_id: number;
@@ -72,25 +73,45 @@ const generateDefaultReports = (userId: number): Report[] => {
   ];
 };
 
+// Check if it's the first time for this user
+const isFirstTime = (userId: number): boolean => {
+  try {
+    const key = `${FIRST_TIME_KEY}_${userId}`;
+    return !localStorage.getItem(key);
+  } catch (e) {
+    return true;
+  }
+};
+
+// Mark user as initialized
+const markAsInitialized = (userId: number) => {
+  try {
+    const key = `${FIRST_TIME_KEY}_${userId}`;
+    localStorage.setItem(key, "true");
+  } catch (e) {
+    console.error("Error marking user as initialized:", e);
+  }
+};
+
 // Load reports from localStorage
 const loadReportsFromStorage = (userId: number): Report[] => {
   try {
     const stored = localStorage.getItem(REPORTS_STORAGE_KEY);
-    if (stored) {
-      const allReports: Report[] = JSON.parse(stored);
-      const userReports = allReports.filter((r) => r.usu_ciudadano_id === userId);
-      if (userReports.length > 0) {
-        return userReports;
-      }
+    let allReports: Report[] = stored ? JSON.parse(stored) : [];
+    
+    // Only create default reports on first time
+    if (isFirstTime(userId)) {
+      const defaultReports = generateDefaultReports(userId);
+      allReports = [...allReports, ...defaultReports];
+      saveReportsToStorage(allReports);
+      markAsInitialized(userId);
     }
-    // If no reports, create defaults
-    const defaultReports = generateDefaultReports(userId);
-    saveReportsToStorage(defaultReports);
-    return defaultReports;
+    
+    return allReports.filter((r) => r.usu_ciudadano_id === userId);
   } catch (e) {
     console.error("Error loading reports from storage:", e);
   }
-  return generateDefaultReports(userId);
+  return [];
 };
 
 // Save reports to localStorage
