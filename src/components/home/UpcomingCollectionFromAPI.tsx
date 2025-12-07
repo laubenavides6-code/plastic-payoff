@@ -47,8 +47,7 @@ export function UpcomingCollectionFromAPI({ report }: UpcomingCollectionFromAPIP
       to={`/collections/${report.rre_id}`}
       className="eco-card block space-y-3 group hover:shadow-elevated transition-shadow duration-200"
     >
-      <div className="flex items-center justify-between">
-        <h3 className="font-display font-semibold text-foreground">Próxima recolección</h3>
+      <div className="flex items-center justify-end">
         <span className={cn("eco-badge", status.className)}>{status.label}</span>
       </div>
 
