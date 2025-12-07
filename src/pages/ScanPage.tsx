@@ -13,37 +13,9 @@ interface ScanResponse {
   preparacion: string[];
   impacto_inmediato: string[];
   materiales: string[];
-  peso: string;
-  puntos_otorgados: string;
+  peso_estimado: string[];
+  puntaje: number;
 }
-
-// Mock response - Lenguaje directo e impactante
-const MOCK_RESPONSE: ScanResponse = {
-  materiales: [
-    "Botella PET transparente",
-    "Tapa PP rígida",
-    "Etiqueta plástica"
-  ],
-  preparacion: [
-    "Vacíala por completo",
-    "Enjuágala rápido",
-    "Aplástala para ahorrar espacio",
-    "Déjale la tapa puesta",
-    "La etiqueta puede quedarse"
-  ],
-  impacto_inmediato: [
-    "Reduces emisiones de CO2",
-    "Menos basura en los rellenos",
-    "Generas ingresos para recicladores"
-  ],
-  daño_ambiental: [
-    "Tarda 450 años en desaparecer",
-    "Una tapa puede matar peces y aves",
-    "Mezclada contamina todo lo demás"
-  ],
-  peso: "0.35",
-  puntos_otorgados: "15",
-};
 
 const BASE_URL = "https://ecogiro.jdxico.easypanel.host";
 
@@ -111,7 +83,6 @@ export default function ScanPage() {
   };
 
   const uploadImage = async (imageDataUrl: string): Promise<ScanResponse> => {
-    // Convert base64 to blob
     const response = await fetch(imageDataUrl);
     const blob = await response.blob();
     const file = new File([blob], "captured-image.jpg", { type: "image/jpeg" });
@@ -121,30 +92,19 @@ export default function ScanPage() {
     formData.append("file", file);
     formData.append("campania_id", "");
 
-    try {
-      const apiResponse = await fetch(`${BASE_URL}/media/upload-image`, {
-        method: "POST",
-        body: formData,
-      });
+    const apiResponse = await fetch(`${BASE_URL}/media/upload-image`, {
+      method: "POST",
+      body: formData,
+    });
 
-      if (!apiResponse.ok) {
-        const errorData = await apiResponse.json();
-        throw new Error(errorData.errors?.[0]?.message || "Error al procesar la imagen");
-      }
-
-      // For now, return mock response while endpoint is being developed
-      // const data = await apiResponse.json();
-      // return data;
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      return MOCK_RESPONSE;
-    } catch (error) {
-      // If fetch fails, still return mock response for now
-      console.log("Using mock response while endpoint is unavailable");
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      return MOCK_RESPONSE;
+    if (!apiResponse.ok) {
+      const errorData = await apiResponse.json();
+      throw new Error(errorData.detail || "Error al procesar la imagen");
     }
+
+    const data = await apiResponse.json();
+    const iaResult = JSON.parse(data.ia_result.response) as ScanResponse;
+    return iaResult;
   };
 
   const handleCapture = async () => {
@@ -183,11 +143,16 @@ export default function ScanPage() {
   };
 
   const handleSchedule = () => {
+    // Extract average weight from peso_estimado array
+    const pesoText = scanResult?.peso_estimado?.find(p => p.toLowerCase().includes("total")) || "";
+    const pesoMatch = pesoText.match(/(\d+)\s*a\s*(\d+)/);
+    const avgPeso = pesoMatch ? ((parseInt(pesoMatch[1]) + parseInt(pesoMatch[2])) / 2 / 1000).toFixed(3) : "0";
+    
     navigate("/schedule", {
       state: { 
         material: scanResult?.materiales?.[0] || "Material reciclable",
-        peso: scanResult?.peso || "0",
-        puntos_otorgados: scanResult?.puntos_otorgados || "0",
+        peso: avgPeso,
+        puntos_otorgados: scanResult?.puntaje?.toString() || "0",
         capturedImage: capturedImage,
       },
     });
@@ -198,6 +163,7 @@ export default function ScanPage() {
     { key: "preparacion", title: "Cómo prepararlo", icon: Footprints, iconColor: "text-primary" },
     { key: "impacto_inmediato", title: "Tu impacto positivo", icon: Leaf, iconColor: "text-primary" },
     { key: "daño_ambiental", title: "¿Qué pasaría si no reciclas?", icon: Globe, iconColor: "text-primary" },
+    { key: "peso_estimado", title: "Peso estimado", icon: Package, iconColor: "text-primary" },
   ];
 
   if (step === "permission") {
@@ -341,50 +307,35 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* Weight display */}
-        {scanResult?.peso && (
-          <div className="animate-fade-up" style={{ animationDelay: "50ms" }}>
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-eco-green-light flex items-center justify-center">
-                  <Package className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex flex-col items-start">
-                  <p className="text-2xl font-bold text-primary">{scanResult.peso} kg</p>
-                  <span className="text-[10px] text-muted-foreground/70">
-                    Aproximado
-                  </span>
-                </div>
-              </div>
-            </Card>
-          </div>
-        )}
 
         {/* Result cards */}
         {scanResult && (
           <div className="space-y-4 animate-fade-up" style={{ animationDelay: "100ms" }}>
             {sectionConfig.map(({ key, title, icon: Icon, iconColor }) => {
-              const items = scanResult[key as keyof Omit<ScanResponse, 'peso'>];
+              const items = scanResult[key as keyof Omit<ScanResponse, 'puntaje'>];
               if (!items || !Array.isArray(items) || items.length === 0) return null;
 
               const isPreparacion = key === "preparacion";
+              const isPesoEstimado = key === "peso_estimado";
 
               return (
                 <Card key={key} className="p-4">
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center gap-3 mb-3">
                     <div className={cn("w-10 h-10 rounded-xl bg-eco-green-light flex items-center justify-center", iconColor)}>
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className="font-semibold text-foreground">{title}</span>
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-foreground">{title}</span>
+                      {isPesoEstimado && (
+                        <span className="text-[10px] text-muted-foreground/50">Aproximado</span>
+                      )}
+                    </div>
                   </div>
                   
                   {isPreparacion ? (
                     <div className="space-y-2">
                       {items.map((item, index) => (
-                        <div 
-                          key={index} 
-                          className="flex items-start gap-3"
-                        >
+                        <div key={index} className="flex items-start gap-3">
                           <span className="text-sm font-semibold text-primary flex-shrink-0 w-5">
                             {index + 1}.
                           </span>
@@ -395,10 +346,7 @@ export default function ScanPage() {
                   ) : (
                     <ul className="space-y-2">
                       {items.map((item, index) => (
-                        <li 
-                          key={index} 
-                          className="flex items-start gap-2 text-sm text-muted-foreground"
-                        >
+                        <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
                           <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
                           <span>{item}</span>
                         </li>
