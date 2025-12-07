@@ -42,7 +42,7 @@ export default function LoginPage() {
           <div className="w-20 h-20 bg-eco-green-light rounded-full flex items-center justify-center mx-auto mb-4">
             <Leaf className="w-10 h-10 text-primary" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-foreground">EcoApp</h1>
+          <h1 className="text-3xl font-display font-bold text-foreground">EcoGiro</h1>
           <p className="text-muted-foreground mt-2">Ingresa a tu cuenta</p>
         </div>
 
@@ -90,17 +90,6 @@ export default function LoginPage() {
             {isLoading ? "Ingresando..." : "Ingresar"}
           </Button>
         </form>
-
-        {/* Demo credentials */}
-        <div className="eco-card bg-muted/50 text-center">
-          <p className="text-xs text-muted-foreground mb-2">Credenciales de prueba:</p>
-          <p className="text-xs text-foreground">
-            <strong>Ciudadano:</strong> ciudadano / password123
-          </p>
-          <p className="text-xs text-foreground">
-            <strong>Centro de Acopio:</strong> acopio / password123
-          </p>
-        </div>
       </div>
     </div>
   );
