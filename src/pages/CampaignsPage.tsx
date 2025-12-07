@@ -103,17 +103,18 @@ export default function CampaignsPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center justify-between z-50">
+      <header className="sticky top-0 bg-primary px-5 py-4 flex items-center justify-between z-50">
         <div>
-          <h1 className="text-xl font-display font-bold text-foreground">Centro de Acopio</h1>
-          <p className="text-sm text-muted-foreground">Gestiona tus campañas</p>
+          <h1 className="text-xl font-display font-bold text-primary-foreground">Centro de Acopio</h1>
+          <p className="text-sm text-primary-foreground/80">Gestiona tus campañas</p>
         </div>
         <button
           onClick={handleLogout}
-          className="p-2 hover:bg-muted rounded-xl transition-colors"
+          className="flex items-center gap-2 px-3 py-2 bg-primary-foreground/10 hover:bg-primary-foreground/20 rounded-xl transition-colors"
           aria-label="Cerrar sesión"
         >
-          <LogOut className="w-5 h-5 text-muted-foreground" />
+          <LogOut className="w-4 h-4 text-primary-foreground" />
+          <span className="text-sm font-medium text-primary-foreground">Salir</span>
         </button>
       </header>
 
@@ -188,7 +189,7 @@ export default function CampaignsPage() {
 
       {/* Create Campaign Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-md mx-4 rounded-2xl">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-display text-xl">Crear nueva campaña</DialogTitle>
           </DialogHeader>
@@ -216,8 +217,8 @@ export default function CampaignsPage() {
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe qué materiales necesitas y para qué..."
-                className="eco-input min-h-[80px] resize-none"
+                placeholder="Ej: Necesitamos 500kg de plástico PET para fabricar mobiliario urbano. Al aceptar esta campaña recibirás notificación por Telegram con los detalles de entrega."
+                className="eco-input min-h-[100px] resize-none"
                 disabled={isSubmitting}
               />
             </div>
