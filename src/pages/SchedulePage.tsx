@@ -10,21 +10,30 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-
 const MAPBOX_TOKEN = "pk.eyJ1IjoibWF0ZW8xMjIiLCJhIjoiY21pcTNqYTlmMGMxZTNlcHdhMnhmczFwdiJ9.8C4efXzPA1KALooo2ZmP4w";
-
-const timeSlots = [
-  { id: "8-11", label: "8:00 - 11:00" },
-  { id: "11-14", label: "11:00 - 14:00" },
-  { id: "14-17", label: "14:00 - 17:00" },
-  { id: "17-20", label: "17:00 - 20:00" },
-];
-
+const timeSlots = [{
+  id: "8-11",
+  label: "8:00 - 11:00"
+}, {
+  id: "11-14",
+  label: "11:00 - 14:00"
+}, {
+  id: "14-17",
+  label: "14:00 - 17:00"
+}, {
+  id: "17-20",
+  label: "17:00 - 20:00"
+}];
 export default function SchedulePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { material, quantity } = location.state || { material: "PET", quantity: "2.5 kg" };
-
+  const {
+    material,
+    quantity
+  } = location.state || {
+    material: "PET",
+    quantity: "2.5 kg"
+  };
   const [address, setAddress] = useState("Cra 15 #82-45, Chapinero, Bogotá");
   const [addressCoords, setAddressCoords] = useState<[number, number] | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -32,7 +41,6 @@ export default function SchedulePage() {
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
-
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
@@ -43,9 +51,7 @@ export default function SchedulePage() {
   // Geocode address to coordinates
   const geocodeAddress = useCallback(async (addressQuery: string) => {
     try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(addressQuery)}.json?access_token=${MAPBOX_TOKEN}&country=co&language=es&limit=1`
-      );
+      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(addressQuery)}.json?access_token=${MAPBOX_TOKEN}&country=co&language=es&limit=1`);
       const data = await response.json();
       if (data.features && data.features.length > 0) {
         const coords: [number, number] = data.features[0].center;
@@ -67,17 +73,15 @@ export default function SchedulePage() {
   // Initialize map
   useEffect(() => {
     if (!mapContainerRef.current) return;
-
     mapboxgl.accessToken = MAPBOX_TOKEN;
-
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: [-74.0721, 4.7110], // Default: Bogotá
+      center: [-74.0721, 4.7110],
+      // Default: Bogotá
       zoom: 14,
-      interactive: false, // Read-only map
+      interactive: false // Read-only map
     });
-
     return () => {
       mapRef.current?.remove();
       mapRef.current = null;
@@ -87,34 +91,32 @@ export default function SchedulePage() {
   // Update map when coordinates change
   useEffect(() => {
     if (!mapRef.current || !addressCoords) return;
-
     mapRef.current.flyTo({
       center: addressCoords,
       zoom: 16,
-      duration: 1000,
+      duration: 1000
     });
 
     // Update or create marker
     if (markerRef.current) {
       markerRef.current.setLngLat(addressCoords);
     } else {
-      markerRef.current = new mapboxgl.Marker({ color: "#16a34a" })
-        .setLngLat(addressCoords)
-        .addTo(mapRef.current);
+      markerRef.current = new mapboxgl.Marker({
+        color: "#16a34a"
+      }).setLngLat(addressCoords).addTo(mapRef.current);
     }
   }, [addressCoords]);
-
   const canSubmit = address && selectedDate && selectedTime;
-
   const handleSubmit = async () => {
     if (!canSubmit) return;
-
     setIsSubmitting(true);
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Get the selected date label
-    const selectedDateLabel = selectedDate ? format(selectedDate, "EEEE d 'de' MMMM", { locale: es }) : "";
+    const selectedDateLabel = selectedDate ? format(selectedDate, "EEEE d 'de' MMMM", {
+      locale: es
+    }) : "";
     const selectedTimeObj = timeSlots.find(t => t.id === selectedTime);
 
     // Create new collection
@@ -126,7 +128,7 @@ export default function SchedulePage() {
       quantity,
       address,
       status: "pending" as const,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     };
 
     // Save to localStorage
@@ -134,25 +136,17 @@ export default function SchedulePage() {
     const existingCollections = JSON.parse(localStorage.getItem(COLLECTIONS_KEY) || "[]");
     existingCollections.unshift(newCollection);
     localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(existingCollections));
-
     setIsSubmitting(false);
-
     toast({
       title: "¡Solicitud enviada! 🎉",
-      description: "EcoGiro notificará a un reciclador. Te avisaremos cuando acepte.",
+      description: "EcoGiro notificará a un reciclador. Te avisaremos cuando acepte."
     });
-
     navigate("/collections");
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-10">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors"
-        >
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <h1 className="text-lg font-display font-semibold text-foreground">Agendar recolección</h1>
@@ -171,122 +165,82 @@ export default function SchedulePage() {
         </div>
 
         {/* Address */}
-        <section className="eco-section animate-fade-up" style={{ animationDelay: "50ms" }}>
+        <section className="eco-section animate-fade-up" style={{
+        animationDelay: "50ms"
+      }}>
           <h2 className="eco-section-title">Dirección de recolección *</h2>
           <AddressInput value={address} onChange={handleAddressChange} />
           
           {/* Map preview */}
-          <div className="mt-3 rounded-xl overflow-hidden border border-border h-40 relative">
-            <div ref={mapContainerRef} className="w-full h-full" />
-            {!addressCoords && (
-              <div className="absolute inset-0 bg-muted/50 flex items-center justify-center">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-sm">Selecciona una dirección</span>
-                </div>
-              </div>
-            )}
-          </div>
+          
         </section>
 
         {/* Date */}
-        <section className="eco-section animate-fade-up" style={{ animationDelay: "100ms" }}>
+        <section className="eco-section animate-fade-up" style={{
+        animationDelay: "100ms"
+      }}>
           <h2 className="eco-section-title flex items-center gap-2">
             <CalendarIcon className="w-4 h-4" />
             Fecha * <span className="text-xs text-muted-foreground font-normal">(mínimo 24 horas)</span>
           </h2>
           <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
             <PopoverTrigger asChild>
-              <button
-                className={cn(
-                  "eco-input w-full text-left flex items-center justify-between",
-                  !selectedDate && "text-muted-foreground"
-                )}
-              >
-                {selectedDate 
-                  ? <span className="capitalize">{format(selectedDate, "EEEE d 'de' MMMM yyyy", { locale: es })}</span>
-                  : "Selecciona una fecha"
-                }
+              <button className={cn("eco-input w-full text-left flex items-center justify-between", !selectedDate && "text-muted-foreground")}>
+                {selectedDate ? <span className="capitalize">{format(selectedDate, "EEEE d 'de' MMMM yyyy", {
+                  locale: es
+                })}</span> : "Selecciona una fecha"}
                 <CalendarIcon className="w-4 h-4 text-muted-foreground" />
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => {
-                  setSelectedDate(date);
-                  setDatePopoverOpen(false);
-                }}
-                disabled={(date) => date < minDate}
-                initialFocus
-                locale={es}
-              />
+              <Calendar mode="single" selected={selectedDate} onSelect={date => {
+              setSelectedDate(date);
+              setDatePopoverOpen(false);
+            }} disabled={date => date < minDate} initialFocus locale={es} />
             </PopoverContent>
           </Popover>
         </section>
 
         {/* Time slots */}
-        <section className="eco-section animate-fade-up" style={{ animationDelay: "150ms" }}>
+        <section className="eco-section animate-fade-up" style={{
+        animationDelay: "150ms"
+      }}>
           <h2 className="eco-section-title flex items-center gap-2">
             <Clock className="w-4 h-4" />
             Franja horaria *
           </h2>
           <div className="grid grid-cols-2 gap-3">
-            {timeSlots.map((slot) => (
-              <button
-                key={slot.id}
-                onClick={() => setSelectedTime(slot.id)}
-                className={cn(
-                  "eco-chip py-3",
-                  selectedTime === slot.id ? "eco-chip-active" : "eco-chip-inactive"
-                )}
-              >
+            {timeSlots.map(slot => <button key={slot.id} onClick={() => setSelectedTime(slot.id)} className={cn("eco-chip py-3", selectedTime === slot.id ? "eco-chip-active" : "eco-chip-inactive")}>
                 {slot.label}
-              </button>
-            ))}
+              </button>)}
           </div>
         </section>
 
         {/* Comment */}
-        <section className="eco-section animate-fade-up" style={{ animationDelay: "200ms" }}>
+        <section className="eco-section animate-fade-up" style={{
+        animationDelay: "200ms"
+      }}>
           <h2 className="eco-section-title flex items-center gap-2">
             <MessageSquare className="w-4 h-4" />
             Comentario (opcional)
           </h2>
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Ej: Tocar el timbre del apto 301"
-            rows={3}
-            className="eco-input resize-none"
-          />
+          <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Ej: Tocar el timbre del apto 301" rows={3} className="eco-input resize-none" />
         </section>
 
         {/* Submit */}
-        <div className="pt-4 space-y-3 animate-fade-up" style={{ animationDelay: "250ms" }}>
-          <button
-            onClick={handleSubmit}
-            disabled={!canSubmit || isSubmitting}
-            className={cn(
-              "eco-button-primary w-full flex items-center justify-center gap-2",
-              (!canSubmit || isSubmitting) && "opacity-50 cursor-not-allowed shadow-none"
-            )}
-          >
-            {isSubmitting ? (
-              <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-            ) : (
-              <>
+        <div className="pt-4 space-y-3 animate-fade-up" style={{
+        animationDelay: "250ms"
+      }}>
+          <button onClick={handleSubmit} disabled={!canSubmit || isSubmitting} className={cn("eco-button-primary w-full flex items-center justify-center gap-2", (!canSubmit || isSubmitting) && "opacity-50 cursor-not-allowed shadow-none")}>
+            {isSubmitting ? <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> : <>
                 <Check className="w-5 h-5" />
                 Confirmar solicitud
-              </>
-            )}
+              </>}
           </button>
           <p className="text-xs text-center text-muted-foreground">
             EcoGiro notificará a un reciclador. Te avisaremos cuando acepte.
           </p>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }
