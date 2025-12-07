@@ -1,11 +1,17 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Calendar, Clock, MessageSquare, Check } from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon, Clock, MessageSquare, Check, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import AddressInput from "@/components/schedule/AddressInput";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+const MAPBOX_TOKEN = "pk.eyJ1IjoibWF0ZW8xMjIiLCJhIjoiY21pcTNqYTlmMGMxZTNlcHdhMnhmczFwdiJ9.8C4efXzPA1KALooo2ZmP4w";
 
 const timeSlots = [
   { id: "8-11", label: "8:00 - 11:00" },
@@ -19,24 +25,84 @@ export default function SchedulePage() {
   const location = useLocation();
   const { material, quantity } = location.state || { material: "PET", quantity: "2.5 kg" };
 
-  // Generate dates starting from tomorrow (minimum 24 hours)
-  const availableDates = useMemo(() => {
-    const tomorrow = addDays(new Date(), 1);
-    const dayAfter = addDays(new Date(), 2);
-    const twoDaysAfter = addDays(new Date(), 3);
-    
-    return [
-      { id: "tomorrow", label: format(tomorrow, "EEEE d 'de' MMMM", { locale: es }) },
-      { id: "dayAfter", label: format(dayAfter, "EEEE d 'de' MMMM", { locale: es }) },
-      { id: "twoDaysAfter", label: format(twoDaysAfter, "EEEE d 'de' MMMM", { locale: es }) },
-    ];
-  }, []);
-
   const [address, setAddress] = useState("Cra 15 #82-45, Chapinero, Bogotá");
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [addressCoords, setAddressCoords] = useState<[number, number] | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markerRef = useRef<mapboxgl.Marker | null>(null);
+
+  // Minimum date is tomorrow
+  const minDate = addDays(new Date(), 1);
+
+  // Geocode address to coordinates
+  const geocodeAddress = useCallback(async (addressQuery: string) => {
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(addressQuery)}.json?access_token=${MAPBOX_TOKEN}&country=co&language=es&limit=1`
+      );
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        const coords: [number, number] = data.features[0].center;
+        setAddressCoords(coords);
+      }
+    } catch (error) {
+      console.error("Error geocoding address:", error);
+    }
+  }, []);
+
+  // Handle address change
+  const handleAddressChange = (newAddress: string) => {
+    setAddress(newAddress);
+    if (newAddress.length > 5) {
+      geocodeAddress(newAddress);
+    }
+  };
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+
+    mapRef.current = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: [-74.0721, 4.7110], // Default: Bogotá
+      zoom: 14,
+      interactive: false, // Read-only map
+    });
+
+    return () => {
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  // Update map when coordinates change
+  useEffect(() => {
+    if (!mapRef.current || !addressCoords) return;
+
+    mapRef.current.flyTo({
+      center: addressCoords,
+      zoom: 16,
+      duration: 1000,
+    });
+
+    // Update or create marker
+    if (markerRef.current) {
+      markerRef.current.setLngLat(addressCoords);
+    } else {
+      markerRef.current = new mapboxgl.Marker({ color: "#16a34a" })
+        .setLngLat(addressCoords)
+        .addTo(mapRef.current);
+    }
+  }, [addressCoords]);
 
   const canSubmit = address && selectedDate && selectedTime;
 
@@ -48,13 +114,13 @@ export default function SchedulePage() {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Get the selected date label
-    const selectedDateObj = availableDates.find(d => d.id === selectedDate);
+    const selectedDateLabel = selectedDate ? format(selectedDate, "EEEE d 'de' MMMM", { locale: es }) : "";
     const selectedTimeObj = timeSlots.find(t => t.id === selectedTime);
 
     // Create new collection
     const newCollection = {
       id: `user-${Date.now()}`,
-      date: selectedDateObj?.label || "",
+      date: selectedDateLabel,
       timeSlot: selectedTimeObj?.label || "",
       material,
       quantity,
@@ -107,29 +173,57 @@ export default function SchedulePage() {
         {/* Address */}
         <section className="eco-section animate-fade-up" style={{ animationDelay: "50ms" }}>
           <h2 className="eco-section-title">Dirección de recolección *</h2>
-          <AddressInput value={address} onChange={setAddress} />
+          <AddressInput value={address} onChange={handleAddressChange} />
+          
+          {/* Map preview */}
+          <div className="mt-3 rounded-xl overflow-hidden border border-border h-40 relative">
+            <div ref={mapContainerRef} className="w-full h-full" />
+            {!addressCoords && (
+              <div className="absolute inset-0 bg-muted/50 flex items-center justify-center">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-sm">Selecciona una dirección</span>
+                </div>
+              </div>
+            )}
+          </div>
         </section>
 
         {/* Date */}
         <section className="eco-section animate-fade-up" style={{ animationDelay: "100ms" }}>
           <h2 className="eco-section-title flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
+            <CalendarIcon className="w-4 h-4" />
             Fecha * <span className="text-xs text-muted-foreground font-normal">(mínimo 24 horas)</span>
           </h2>
-          <div className="flex flex-col gap-2">
-            {availableDates.map((date) => (
+          <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+            <PopoverTrigger asChild>
               <button
-                key={date.id}
-                onClick={() => setSelectedDate(date.id)}
                 className={cn(
-                  "eco-chip py-3 text-left",
-                  selectedDate === date.id ? "eco-chip-active" : "eco-chip-inactive"
+                  "eco-input w-full text-left flex items-center justify-between",
+                  !selectedDate && "text-muted-foreground"
                 )}
               >
-                <span className="font-medium capitalize">{date.label}</span>
+                {selectedDate 
+                  ? <span className="capitalize">{format(selectedDate, "EEEE d 'de' MMMM yyyy", { locale: es })}</span>
+                  : "Selecciona una fecha"
+                }
+                <CalendarIcon className="w-4 h-4 text-muted-foreground" />
               </button>
-            ))}
-          </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => {
+                  setSelectedDate(date);
+                  setDatePopoverOpen(false);
+                }}
+                disabled={(date) => date < minDate}
+                initialFocus
+                locale={es}
+              />
+            </PopoverContent>
+          </Popover>
         </section>
 
         {/* Time slots */}

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Camera, X, HelpCircle, ArrowRight, Loader2, AlertTriangle, Leaf, Recycle, Footprints } from "lucide-react";
+import { Camera, X, HelpCircle, ArrowRight, Loader2, Globe, Leaf, Recycle, Footprints, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -13,14 +13,15 @@ interface ScanResponse {
   preparacion: string[];
   impacto_inmediato: string[];
   materiales: string[];
+  peso: string;
 }
 
 // Mock response - Lenguaje directo e impactante
 const MOCK_RESPONSE: ScanResponse = {
-  daño_ambiental: [
-    "Tarda 450 años en desaparecer",
-    "Una tapa puede matar peces y aves",
-    "Mezclada contamina todo lo demás"
+  materiales: [
+    "Botella PET transparente",
+    "Tapa PP rígida",
+    "Etiqueta plástica"
   ],
   preparacion: [
     "Vacíala por completo",
@@ -34,11 +35,12 @@ const MOCK_RESPONSE: ScanResponse = {
     "Menos basura en los rellenos",
     "Generas ingresos para recicladores"
   ],
-  materiales: [
-    "Botella PET transparente",
-    "Tapa PP rígida",
-    "Etiqueta plástica"
+  daño_ambiental: [
+    "Tarda 450 años en desaparecer",
+    "Una tapa puede matar peces y aves",
+    "Mezclada contamina todo lo demás"
   ],
+  peso: "0.35",
 };
 
 const BASE_URL = "https://ecogiro.jdxico.easypanel.host";
@@ -185,10 +187,10 @@ export default function ScanPage() {
   };
 
   const sectionConfig = [
-    { key: "daño_ambiental", title: "Si no reciclas...", icon: AlertTriangle, iconColor: "text-primary" },
+    { key: "materiales", title: "Materiales detectados", icon: Package, iconColor: "text-primary" },
     { key: "preparacion", title: "Cómo prepararlo", icon: Footprints, iconColor: "text-primary" },
     { key: "impacto_inmediato", title: "Tu impacto positivo", icon: Leaf, iconColor: "text-primary" },
-    { key: "materiales", title: "Materiales detectados", icon: Recycle, iconColor: "text-primary" },
+    { key: "daño_ambiental", title: "¿Qué pasaría si no reciclas?", icon: Globe, iconColor: "text-primary" },
   ];
 
   if (step === "permission") {
@@ -332,12 +334,24 @@ export default function ScanPage() {
           </div>
         )}
 
+        {/* Weight display */}
+        {scanResult?.peso && (
+          <div className="animate-fade-up" style={{ animationDelay: "50ms" }}>
+            <Card className="p-4 text-center">
+              <p className="text-3xl font-bold text-foreground">{scanResult.peso} kg</p>
+              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full mt-1 inline-block">
+                Aproximado
+              </span>
+            </Card>
+          </div>
+        )}
+
         {/* Result cards */}
         {scanResult && (
           <div className="space-y-4 animate-fade-up" style={{ animationDelay: "100ms" }}>
             {sectionConfig.map(({ key, title, icon: Icon, iconColor }) => {
-              const items = scanResult[key as keyof ScanResponse];
-              if (!items || items.length === 0) return null;
+              const items = scanResult[key as keyof Omit<ScanResponse, 'peso'>];
+              if (!items || !Array.isArray(items) || items.length === 0) return null;
 
               const isPreparacion = key === "preparacion";
 
@@ -351,15 +365,15 @@ export default function ScanPage() {
                   </div>
                   
                   {isPreparacion ? (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {items.map((item, index) => (
                         <div 
                           key={index} 
-                          className="flex items-center gap-3"
+                          className="flex items-start gap-3"
                         >
-                          <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold flex-shrink-0">
-                            {index + 1}
-                          </div>
+                          <span className="text-sm font-semibold text-primary flex-shrink-0 w-5">
+                            {index + 1}.
+                          </span>
                           <span className="text-sm text-foreground">{item}</span>
                         </div>
                       ))}
