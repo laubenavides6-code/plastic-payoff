@@ -1,7 +1,11 @@
 import { MobileLayout } from "@/components/layout/MobileLayout";
-import { User, Mail, Phone, MapPin, Bell, Calendar, MessageCircle, FileText, ChevronRight } from "lucide-react";
+import { User, Mail, Phone, MapPin, Bell, Calendar, MessageCircle, FileText, ChevronRight, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const mockUser = {
   name: "Laura García",
@@ -11,8 +15,16 @@ const mockUser = {
 };
 
 export default function ProfilePage() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [notifications, setNotifications] = useState(false);
   const [weeklyReminder, setWeeklyReminder] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+    toast.success("Sesión cerrada");
+  };
 
   return (
     <MobileLayout>
@@ -75,6 +87,18 @@ export default function ProfilePage() {
               <span className="text-sm text-muted-foreground">1.0.0</span>
             </div>
           </div>
+        </section>
+
+        {/* Logout */}
+        <section className="eco-section animate-fade-up" style={{ animationDelay: "250ms" }}>
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="w-4 h-4" />
+            Cerrar sesión
+          </Button>
         </section>
       </div>
     </MobileLayout>

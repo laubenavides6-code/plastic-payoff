@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Clock, MapPin, Package, MessageSquare, Star, DollarSign } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Package, MessageSquare, Star, DollarSign, Trash2, Edit3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const tipOptions = [
@@ -15,6 +16,7 @@ const tipOptions = [
 
 // Helper functions for localStorage persistence
 const STORAGE_KEY = "collection_ratings";
+const COLLECTIONS_KEY = "user_collections";
 
 const getSavedRatings = (): Record<string, { rating: number; tip: number | null }> => {
   try {
@@ -32,6 +34,31 @@ const saveRating = (collectionId: string, data: { rating?: number; tip?: number 
     tip: data.tip !== undefined ? data.tip : current[collectionId]?.tip ?? null,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+};
+
+interface Collection {
+  id: string;
+  date: string;
+  timeSlot: string;
+  material: string;
+  quantity: string;
+  address: string;
+  status: "pending" | "accepted" | "collected";
+  comment?: string;
+  createdAt?: string;
+}
+
+const getUserCollections = (): Collection[] => {
+  try {
+    const stored = localStorage.getItem(COLLECTIONS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveUserCollections = (collections: Collection[]) => {
+  localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections));
 };
 
 const statusConfig = {
@@ -55,17 +82,8 @@ const statusConfig = {
   },
 };
 
-// Mock data - would come from API
-const mockCollections: Record<string, {
-  id: string;
-  date: string;
-  timeSlot: string;
-  material: string;
-  quantity: string;
-  address: string;
-  status: "pending" | "accepted" | "collected";
-  comment: string;
-}> = {
+// Mock data for static collections
+const mockCollections: Record<string, Collection> = {
   "1": {
     id: "1",
     date: "Domingo 7 diciembre",
@@ -98,13 +116,18 @@ const mockCollections: Record<string, {
   },
 };
 
+const timeSlots = [
+  { id: "morning", label: "8:00 - 11:00" },
+  { id: "midday", label: "11:00 - 14:00" },
+  { id: "afternoon", label: "14:00 - 17:00" },
+];
+
 export default function CollectionDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const collection = mockCollections[id || "1"] || mockCollections["1"];
-  const status = statusConfig[collection.status];
   
-  const [comment, setComment] = useState(collection.comment);
+  const [collection, setCollection] = useState<Collection | null>(null);
+  const [comment, setComment] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [rating, setRating] = useState(0);
   const [selectedTip, setSelectedTip] = useState<number | string | null>(null);
@@ -112,9 +135,39 @@ export default function CollectionDetailPage() {
   const [hasRated, setHasRated] = useState(false);
   const [hasTipped, setHasTipped] = useState(false);
   const [savedTipAmount, setSavedTipAmount] = useState<number | null>(null);
+  const [canModify, setCanModify] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [newTimeSlot, setNewTimeSlot] = useState("");
 
-  // Load saved data from localStorage on mount
+  // Load collection data
   useEffect(() => {
+    if (!id) return;
+
+    // First check user collections
+    const userCollections = getUserCollections();
+    const userCollection = userCollections.find(c => c.id === id);
+
+    if (userCollection) {
+      setCollection(userCollection);
+      setComment(userCollection.comment || "");
+      
+      // Check if can modify (within 10 minutes of creation)
+      if (userCollection.createdAt && userCollection.status === "pending") {
+        const createdAt = new Date(userCollection.createdAt);
+        const now = new Date();
+        const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+        setCanModify(diffMinutes <= 10);
+      }
+    } else if (mockCollections[id]) {
+      setCollection(mockCollections[id]);
+      setComment(mockCollections[id].comment || "");
+    }
+  }, [id]);
+
+  // Load saved rating data
+  useEffect(() => {
+    if (!collection) return;
+    
     const savedData = getSavedRatings()[collection.id];
     if (savedData) {
       if (savedData.rating) {
@@ -127,7 +180,17 @@ export default function CollectionDetailPage() {
         setHasTipped(true);
       }
     }
-  }, [collection.id]);
+  }, [collection]);
+
+  if (!collection) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Cargando...</p>
+      </div>
+    );
+  }
+
+  const status = statusConfig[collection.status];
 
   const handleSaveComment = async () => {
     setIsSaving(true);
@@ -162,6 +225,40 @@ export default function CollectionDetailPage() {
     setHasTipped(true);
     setSavedTipAmount(tipAmount);
     toast.success("¡Propina enviada al reciclador!");
+  };
+
+  const handleCancelCollection = async () => {
+    if (!window.confirm("¿Estás seguro de que quieres cancelar esta recolección?")) {
+      return;
+    }
+
+    const userCollections = getUserCollections();
+    const filtered = userCollections.filter(c => c.id !== collection.id);
+    saveUserCollections(filtered);
+    
+    toast.success("Recolección cancelada");
+    navigate("/collections");
+  };
+
+  const handleUpdateTimeSlot = async () => {
+    if (!newTimeSlot) {
+      toast.error("Por favor selecciona un horario");
+      return;
+    }
+
+    const userCollections = getUserCollections();
+    const updatedCollections = userCollections.map(c => {
+      if (c.id === collection.id) {
+        const slotLabel = timeSlots.find(t => t.id === newTimeSlot)?.label || c.timeSlot;
+        return { ...c, timeSlot: slotLabel };
+      }
+      return c;
+    });
+
+    saveUserCollections(updatedCollections);
+    setCollection({ ...collection, timeSlot: timeSlots.find(t => t.id === newTimeSlot)?.label || collection.timeSlot });
+    setShowEditModal(false);
+    toast.success("Horario actualizado");
   };
 
   return (
@@ -207,6 +304,39 @@ export default function CollectionDetailPage() {
             </DetailRow>
           </div>
         </section>
+
+        {/* Actions for pending user collections */}
+        {collection.status === "pending" && collection.id.startsWith("user-") && (
+          <section className="eco-card space-y-3 animate-fade-up" style={{ animationDelay: "75ms" }}>
+            <h2 className="font-display font-semibold text-foreground">Acciones</h2>
+            
+            {canModify && (
+              <Button
+                onClick={() => setShowEditModal(true)}
+                variant="outline"
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <Edit3 className="w-4 h-4" />
+                Modificar horario
+              </Button>
+            )}
+
+            {!canModify && (
+              <p className="text-xs text-muted-foreground text-center">
+                El tiempo para modificar el horario ha expirado (máximo 10 minutos después de crear la solicitud).
+              </p>
+            )}
+
+            <Button
+              onClick={handleCancelCollection}
+              variant="destructive"
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Cancelar recolección
+            </Button>
+          </section>
+        )}
 
         {/* Comment Section - Only for pending/accepted */}
         {collection.status !== "collected" && (
@@ -350,6 +480,46 @@ export default function CollectionDetailPage() {
           </>
         )}
       </div>
+
+      {/* Edit Time Slot Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="sm:max-w-md mx-4 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">Modificar horario</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            <p className="text-sm text-muted-foreground">
+              Selecciona un nuevo horario para tu recolección:
+            </p>
+
+            <div className="space-y-2">
+              {timeSlots.map((slot) => (
+                <button
+                  key={slot.id}
+                  onClick={() => setNewTimeSlot(slot.id)}
+                  className={cn(
+                    "w-full py-3 px-4 rounded-xl border-2 font-medium transition-all text-left",
+                    newTimeSlot === slot.id
+                      ? "border-primary bg-eco-green-light text-primary"
+                      : "border-border bg-background text-foreground hover:border-primary/50"
+                  )}
+                >
+                  {slot.label}
+                </button>
+              ))}
+            </div>
+
+            <Button
+              onClick={handleUpdateTimeSlot}
+              className="w-full eco-button-primary"
+              disabled={!newTimeSlot}
+            >
+              Guardar cambios
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
