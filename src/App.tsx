@@ -25,7 +25,6 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
   }
 
   if (allowedRoles && user?.role && !allowedRoles.includes(user.role)) {
-    // Redirect to appropriate home based on role
     if (user.role === "acopio") {
       return <Navigate to="/campaigns" replace />;
     }
@@ -39,7 +38,6 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated } = useAuth();
 
   if (isAuthenticated) {
-    // Redirect based on role
     if (user?.role === "acopio") {
       return <Navigate to="/campaigns" replace />;
     }
@@ -52,10 +50,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public routes */}
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-
-      {/* Ciudadano routes */}
       <Route path="/" element={<ProtectedRoute allowedRoles={["ciudadano"]}><HomePage /></ProtectedRoute>} />
       <Route path="/scan" element={<ProtectedRoute allowedRoles={["ciudadano"]}><ScanPage /></ProtectedRoute>} />
       <Route path="/schedule" element={<ProtectedRoute allowedRoles={["ciudadano"]}><SchedulePage /></ProtectedRoute>} />
@@ -63,13 +58,17 @@ function AppRoutes() {
       <Route path="/collections/:id" element={<ProtectedRoute allowedRoles={["ciudadano"]}><CollectionDetailPage /></ProtectedRoute>} />
       <Route path="/rewards" element={<ProtectedRoute allowedRoles={["ciudadano"]}><RewardsPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute allowedRoles={["ciudadano"]}><ProfilePage /></ProtectedRoute>} />
-
-      {/* Centro de Acopio routes */}
       <Route path="/campaigns" element={<ProtectedRoute allowedRoles={["acopio"]}><CampaignsPage /></ProtectedRoute>} />
-
-      {/* Fallback */}
       <Route path="*" element={<NotFound />} />
     </Routes>
+  );
+}
+
+function AppWithAuth() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 
@@ -79,9 +78,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
+        <AppWithAuth />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
