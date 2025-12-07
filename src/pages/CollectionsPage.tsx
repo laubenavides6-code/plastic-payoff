@@ -1,7 +1,19 @@
 import { MobileLayout } from "@/components/layout/MobileLayout";
-import { Clock, MapPin, Package, ChevronRight } from "lucide-react";
+import { Clock, MapPin, Package, ChevronRight, Star, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+
+// Helper to read saved ratings from localStorage
+const STORAGE_KEY = "collection_ratings";
+const getSavedRatings = (): Record<string, { rating: number; tip: number | null }> => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+};
 
 const statusConfig = {
   pending: {
@@ -49,6 +61,12 @@ const mockCollections = [
 ];
 
 export default function CollectionsPage() {
+  const [savedRatings, setSavedRatings] = useState<Record<string, { rating: number; tip: number | null }>>({});
+  
+  useEffect(() => {
+    setSavedRatings(getSavedRatings());
+  }, []);
+
   const upcoming = mockCollections.filter((c) => c.status !== "collected");
   const history = mockCollections.filter((c) => c.status === "collected");
 
@@ -67,7 +85,7 @@ export default function CollectionsPage() {
             <h2 className="eco-section-title">Próximas</h2>
             <div className="space-y-3">
               {upcoming.map((collection) => (
-                <CollectionCard key={collection.id} collection={collection} />
+                <CollectionCard key={collection.id} collection={collection} savedData={savedRatings[collection.id]} />
               ))}
             </div>
           </section>
@@ -79,7 +97,7 @@ export default function CollectionsPage() {
           {history.length > 0 ? (
             <div className="space-y-3">
               {history.map((collection) => (
-                <CollectionCard key={collection.id} collection={collection} />
+                <CollectionCard key={collection.id} collection={collection} savedData={savedRatings[collection.id]} />
               ))}
             </div>
           ) : (
@@ -103,10 +121,13 @@ interface CollectionCardProps {
     address: string;
     status: "pending" | "accepted" | "collected";
   };
+  savedData?: { rating: number; tip: number | null };
 }
 
-function CollectionCard({ collection }: CollectionCardProps) {
+function CollectionCard({ collection, savedData }: CollectionCardProps) {
   const status = statusConfig[collection.status];
+  const hasRating = savedData?.rating && savedData.rating > 0;
+  const hasTip = savedData?.tip !== null && savedData?.tip !== undefined;
 
   return (
     <Link
@@ -114,7 +135,21 @@ function CollectionCard({ collection }: CollectionCardProps) {
       className="eco-card block group hover:shadow-elevated transition-shadow duration-200"
     >
       <div className="flex items-start justify-between mb-3">
-        <span className={cn("eco-badge", status.className)}>{status.label}</span>
+        <div className="flex items-center gap-2">
+          <span className={cn("eco-badge", status.className)}>{status.label}</span>
+          {hasRating && (
+            <span className="flex items-center gap-0.5 text-xs text-eco-yellow">
+              <Star className="w-3.5 h-3.5 fill-eco-yellow" />
+              {savedData?.rating}
+            </span>
+          )}
+          {hasTip && (
+            <span className="flex items-center gap-0.5 text-xs text-primary">
+              <DollarSign className="w-3.5 h-3.5" />
+              {savedData?.tip?.toLocaleString('es-CO')}
+            </span>
+          )}
+        </div>
         <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
       </div>
 

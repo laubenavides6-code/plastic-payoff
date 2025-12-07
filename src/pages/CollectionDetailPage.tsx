@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Clock, MapPin, Package, MessageSquare, Star, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,8 +13,26 @@ const tipOptions = [
   { value: "custom", label: "Otro" },
 ];
 
-// Simulated storage for ratings and tips
-const savedRatings: Record<string, { rating: number; tip: number | null }> = {};
+// Helper functions for localStorage persistence
+const STORAGE_KEY = "collection_ratings";
+
+const getSavedRatings = (): Record<string, { rating: number; tip: number | null }> => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+};
+
+const saveRating = (collectionId: string, data: { rating?: number; tip?: number | null }) => {
+  const current = getSavedRatings();
+  current[collectionId] = {
+    rating: data.rating ?? current[collectionId]?.rating ?? 0,
+    tip: data.tip !== undefined ? data.tip : current[collectionId]?.tip ?? null,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+};
 
 const statusConfig = {
   pending: {
@@ -86,16 +104,30 @@ export default function CollectionDetailPage() {
   const collection = mockCollections[id || "1"] || mockCollections["1"];
   const status = statusConfig[collection.status];
   
-  const savedData = savedRatings[collection.id];
-  
   const [comment, setComment] = useState(collection.comment);
   const [isSaving, setIsSaving] = useState(false);
-  const [rating, setRating] = useState(savedData?.rating || 0);
-  const [selectedTip, setSelectedTip] = useState<number | string | null>(savedData?.tip || null);
+  const [rating, setRating] = useState(0);
+  const [selectedTip, setSelectedTip] = useState<number | string | null>(null);
   const [customTip, setCustomTip] = useState("");
-  const [hasRated, setHasRated] = useState(!!savedData?.rating);
-  const [hasTipped, setHasTipped] = useState(savedData?.tip !== undefined && savedData?.tip !== null);
-  const [savedTipAmount, setSavedTipAmount] = useState<number | null>(savedData?.tip || null);
+  const [hasRated, setHasRated] = useState(false);
+  const [hasTipped, setHasTipped] = useState(false);
+  const [savedTipAmount, setSavedTipAmount] = useState<number | null>(null);
+
+  // Load saved data from localStorage on mount
+  useEffect(() => {
+    const savedData = getSavedRatings()[collection.id];
+    if (savedData) {
+      if (savedData.rating) {
+        setRating(savedData.rating);
+        setHasRated(true);
+      }
+      if (savedData.tip !== null && savedData.tip !== undefined) {
+        setSelectedTip(savedData.tip);
+        setSavedTipAmount(savedData.tip);
+        setHasTipped(true);
+      }
+    }
+  }, [collection.id]);
 
   const handleSaveComment = async () => {
     setIsSaving(true);
@@ -111,10 +143,7 @@ export default function CollectionDetailPage() {
     }
     setIsSaving(true);
     await new Promise(resolve => setTimeout(resolve, 500));
-    savedRatings[collection.id] = { 
-      ...savedRatings[collection.id], 
-      rating 
-    };
+    saveRating(collection.id, { rating });
     setIsSaving(false);
     setHasRated(true);
     toast.success("¡Gracias por tu calificación!");
@@ -128,10 +157,7 @@ export default function CollectionDetailPage() {
     }
     setIsSaving(true);
     await new Promise(resolve => setTimeout(resolve, 500));
-    savedRatings[collection.id] = { 
-      ...savedRatings[collection.id], 
-      tip: tipAmount 
-    };
+    saveRating(collection.id, { tip: tipAmount });
     setIsSaving(false);
     setHasTipped(true);
     setSavedTipAmount(tipAmount);
