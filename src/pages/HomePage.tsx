@@ -2,6 +2,7 @@ import { MobileLayout } from "@/components/layout/MobileLayout";
 import { ScanButton } from "@/components/home/ScanButton";
 import { EcoPointsCard } from "@/components/home/EcoPointsCard";
 import { UpcomingCollectionCard } from "@/components/home/UpcomingCollectionCard";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 
 // Mock data
 const mockUser = {
@@ -24,13 +25,16 @@ export default function HomePage() {
     <MobileLayout>
       <div className="px-5 py-6 space-y-6">
         {/* Header */}
-        <header className="animate-fade-up" style={{ animationDelay: "0ms" }}>
-          <h1 className="text-2xl font-display font-bold text-foreground">
-            Hola, {mockUser.name} 🌿
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Cada plástico cuenta. ¡Empieza hoy!
-          </p>
+        <header className="animate-fade-up flex items-start justify-between" style={{ animationDelay: "0ms" }}>
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">
+              Hola, {mockUser.name} 🌿
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Cada plástico cuenta. ¡Empieza hoy!
+            </p>
+          </div>
+          <NotificationCenter />
         </header>
 
         {/* Scan Button */}

@@ -4,8 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Megaphone, Plus, Calendar, DollarSign, Target, LogOut, FileText } from "lucide-react";
+import { Megaphone, Plus, Calendar, DollarSign, Target, LogOut, FileText, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface Campaign {
@@ -15,9 +16,11 @@ interface Campaign {
   approximatePrice: string;
   endDate: string;
   createdAt: string;
+  status: "active" | "accepted";
 }
 
 const CAMPAIGNS_STORAGE_KEY = "acopio_campaigns";
+const CITIZEN_NOTIFICATIONS_KEY = "citizen_notifications";
 
 const getCampaigns = (): Campaign[] => {
   try {
@@ -30,6 +33,28 @@ const getCampaigns = (): Campaign[] => {
 
 const saveCampaigns = (campaigns: Campaign[]) => {
   localStorage.setItem(CAMPAIGNS_STORAGE_KEY, JSON.stringify(campaigns));
+};
+
+// Function to add notification for citizen users
+const addCitizenNotification = (campaign: Campaign) => {
+  try {
+    const stored = localStorage.getItem(CITIZEN_NOTIFICATIONS_KEY);
+    const notifications = stored ? JSON.parse(stored) : [];
+    
+    const newNotification = {
+      id: `notif-${Date.now()}`,
+      title: "¡Nueva campaña de reciclaje!",
+      message: `Si reciclas ${campaign.objective.toLowerCase()} esta semana, ¡recibirás puntos dobles para tus beneficios! Precio: $${campaign.approximatePrice}/kg`,
+      type: "campaign",
+      read: false,
+      createdAt: new Date().toISOString(),
+      campaignId: campaign.id,
+    };
+    
+    localStorage.setItem(CITIZEN_NOTIFICATIONS_KEY, JSON.stringify([newNotification, ...notifications]));
+  } catch (error) {
+    console.error("Error adding citizen notification:", error);
+  }
 };
 
 export default function CampaignsPage() {
@@ -80,16 +105,29 @@ export default function CampaignsPage() {
       approximatePrice: approximatePrice.trim(),
       endDate,
       createdAt: new Date().toISOString(),
+      status: "active",
     };
 
     const updatedCampaigns = [newCampaign, ...campaigns];
     setCampaigns(updatedCampaigns);
     saveCampaigns(updatedCampaigns);
 
+    // Add notification for citizen users
+    addCitizenNotification(newCampaign);
+
     setIsSubmitting(false);
     setIsModalOpen(false);
     resetForm();
-    toast.success("¡Campaña creada exitosamente!");
+    toast.success("¡Campaña creada exitosamente! Los ciudadanos han sido notificados.");
+  };
+
+  const handleAcceptCampaign = (campaignId: string) => {
+    const updatedCampaigns = campaigns.map((c) =>
+      c.id === campaignId ? { ...c, status: "accepted" as const } : c
+    );
+    setCampaigns(updatedCampaigns);
+    saveCampaigns(updatedCampaigns);
+    toast.success("¡Campaña marcada como aceptada!");
   };
 
   const formatDate = (dateString: string) => {
@@ -155,22 +193,47 @@ export default function CampaignsPage() {
                       <Target className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground">{campaign.objective}</h3>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-foreground">{campaign.objective}</h3>
+                        {campaign.status === "accepted" ? (
+                          <Badge className="bg-primary/10 text-primary border-0 text-xs">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Aceptada
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            Activa
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                         {campaign.description}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 pt-2 border-t border-border">
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <DollarSign className="w-4 h-4" />
-                      <span>${campaign.approximatePrice}</span>
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <DollarSign className="w-4 h-4" />
+                        <span>${campaign.approximatePrice}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Calendar className="w-4 h-4" />
+                        <span>Hasta {formatDate(campaign.endDate)}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
-                      <span>Hasta {formatDate(campaign.endDate)}</span>
-                    </div>
+                    {campaign.status === "active" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleAcceptCampaign(campaign.id)}
+                        className="text-primary hover:text-primary/80 text-xs"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Marcar aceptada
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
