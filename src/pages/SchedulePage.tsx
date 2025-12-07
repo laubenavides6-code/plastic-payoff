@@ -78,12 +78,12 @@ export default function SchedulePage() {
   const canSubmit = address && selectedDate && selectedTime;
 
   const handleSubmit = async () => {
-    if (!canSubmit || !user) return;
+    if (!canSubmit || !user || !selectedDate) return;
     setIsSubmitting(true);
 
     try {
       const selectedTimeSlot = timeSlots.find(t => t.id === selectedTime);
-      const fechaReporte = selectedTimeSlot 
+      const fechaRecoleccion = selectedTimeSlot 
         ? setMinutes(setHours(selectedDate, selectedTimeSlot.hour), 0)
         : selectedDate;
 
@@ -98,7 +98,7 @@ export default function SchedulePage() {
         direccion_texto: address,
         ia_confianza: Math.floor(Math.random() * 11),
         estado: "PENDIENTE",
-        fecha_reporte: fechaReporte.toISOString(),
+        fecha_reporte: fechaRecoleccion.toISOString(),
         puntos_otorgados: parseInt(puntos_otorgados) || 0,
       };
 

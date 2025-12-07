@@ -1,6 +1,6 @@
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { Clock, MapPin, Package, ChevronRight, Star, DollarSign } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useReports, Report } from "@/contexts/ReportsContext";
@@ -36,12 +36,20 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 export default function CollectionsPage() {
-  const { reports, isLoading } = useReports();
+  const { reports, isLoading, refetchReports } = useReports();
   const [savedRatings, setSavedRatings] = useState<Record<string, { rating: number; tip: number | null }>>({});
+  const location = useLocation();
 
   useEffect(() => {
     setSavedRatings(getSavedRatings());
   }, []);
+
+  // Refetch reports when coming from schedule page
+  useEffect(() => {
+    if (location.state?.refresh) {
+      refetchReports();
+    }
+  }, [location.state?.refresh, refetchReports]);
 
   // Filter reports by status - only PENDIENTE and RECOGIDO
   const upcoming = reports.filter((r) => r.rre_estado === "PENDIENTE");
