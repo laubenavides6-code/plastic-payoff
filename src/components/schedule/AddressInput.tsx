@@ -291,15 +291,16 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
 
       {/* Map Modal */}
       {showMapModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-black/40"
+            className="fixed inset-0 z-[9999]"
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.4)" }}
             onClick={handleCloseModal}
           />
           
           {/* Modal Container - using same padding as screens (16px/1rem) */}
-          <div className="relative z-10 w-full mx-4 bg-card rounded-2xl overflow-hidden shadow-elevated animate-scale-in flex flex-col max-h-[85vh]">
+          <div className="relative z-[10000] w-full mx-4 bg-card rounded-2xl overflow-hidden shadow-elevated animate-scale-in flex flex-col max-h-[85vh]">
             {/* Modal content with 16px padding */}
             <div className="p-4">
               {/* Close button */}
