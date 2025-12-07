@@ -1,24 +1,49 @@
 import { MobileLayout } from "@/components/layout/MobileLayout";
-import { User, Mail, Phone, MapPin, Bell, Calendar, MessageCircle, FileText, ChevronRight, LogOut } from "lucide-react";
-import { useState } from "react";
+import { User, Mail, Phone, MapPin, Bell, Calendar, MessageCircle, FileText, ChevronRight, LogOut, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-const mockUser = {
-  name: "Laura García",
-  email: "laura.garcia@email.com",
-  phone: "+57 300 123 4567",
-  address: "Cra 15 #82-45, Chapinero, Bogotá",
-};
+const BASE_URL = "https://ecogiro.jdxico.easypanel.host";
+
+interface UserProfile {
+  usuario_id: number;
+  nombres: string;
+  apellidos: string;
+  telefono: string;
+  email: string;
+  foto_perfil: string;
+  puntos_acumulados: number;
+  nivel_gamificacion: number;
+}
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [notifications, setNotifications] = useState(false);
   const [weeklyReminder, setWeeklyReminder] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.user_id) return;
+      try {
+        const response = await fetch(`${BASE_URL}/usuarios/${user.user_id}`);
+        if (!response.ok) throw new Error("Error al cargar perfil");
+        const data = await response.json();
+        setProfile(data);
+      } catch (error) {
+        toast.error("No se pudo cargar el perfil");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [user?.user_id]);
 
   const handleLogout = () => {
     logout();
@@ -26,15 +51,31 @@ export default function ProfilePage() {
     toast.success("Sesión cerrada");
   };
 
+  if (loading) {
+    return (
+      <MobileLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MobileLayout>
+    );
+  }
+
+  const fullName = profile ? `${profile.nombres} ${profile.apellidos}` : "Usuario";
+
   return (
     <MobileLayout>
       <div className="px-5 py-6 space-y-6">
         {/* Header */}
         <header className="text-center animate-fade-up">
-          <div className="w-20 h-20 rounded-full bg-eco-green-light flex items-center justify-center mx-auto mb-4">
-            <User className="w-10 h-10 text-primary" />
+          <div className="w-20 h-20 rounded-full bg-eco-green-light flex items-center justify-center mx-auto mb-4 overflow-hidden">
+            {profile?.foto_perfil ? (
+              <img src={profile.foto_perfil} alt="Foto de perfil" className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-10 h-10 text-primary" />
+            )}
           </div>
-          <h1 className="text-xl font-display font-bold text-foreground">{mockUser.name}</h1>
+          <h1 className="text-xl font-display font-bold text-foreground">{fullName}</h1>
           <p className="text-muted-foreground text-sm">Miembro desde 2024</p>
         </header>
 
@@ -42,9 +83,9 @@ export default function ProfilePage() {
         <section className="eco-section animate-fade-up" style={{ animationDelay: "50ms" }}>
           <h2 className="eco-section-title">Datos personales</h2>
           <div className="eco-card space-y-4">
-            <InfoRow icon={Mail} label="Correo" value={mockUser.email} />
-            <InfoRow icon={Phone} label="Teléfono" value={mockUser.phone} />
-            <InfoRow icon={MapPin} label="Dirección" value={mockUser.address} />
+            <InfoRow icon={Mail} label="Correo" value={profile?.email || ""} />
+            <InfoRow icon={Phone} label="Teléfono" value={profile?.telefono ? `+57 ${profile.telefono}` : ""} />
+            <InfoRow icon={MapPin} label="Dirección" value="Calle 68 Sur #49-21, Kennedy, Bogotá" />
           </div>
         </section>
 
