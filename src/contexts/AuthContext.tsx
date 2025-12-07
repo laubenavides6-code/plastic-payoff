@@ -34,17 +34,6 @@ const formatRole = (rol: string): UserRole => {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserData | null>(null);
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        setUser(JSON.parse(stored));
-      }
-    } catch {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    }
-  }, []);
-
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -75,7 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       setUser(userData);
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
       return { success: true };
     } catch (error) {
       console.error("Login error:", error);
@@ -85,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem(AUTH_STORAGE_KEY);
   };
 
   return (
