@@ -10,7 +10,11 @@ const tipOptions = [
   { value: 2000, label: "$2.000" },
   { value: 5000, label: "$5.000" },
   { value: 10000, label: "$10.000" },
+  { value: "custom", label: "Otro" },
 ];
+
+// Simulated storage for ratings and tips
+const savedRatings: Record<string, { rating: number; tip: number | null }> = {};
 
 const statusConfig = {
   pending: {
@@ -82,12 +86,16 @@ export default function CollectionDetailPage() {
   const collection = mockCollections[id || "1"] || mockCollections["1"];
   const status = statusConfig[collection.status];
   
+  const savedData = savedRatings[collection.id];
+  
   const [comment, setComment] = useState(collection.comment);
   const [isSaving, setIsSaving] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [selectedTip, setSelectedTip] = useState<number | null>(null);
-  const [hasRated, setHasRated] = useState(false);
-  const [hasTipped, setHasTipped] = useState(false);
+  const [rating, setRating] = useState(savedData?.rating || 0);
+  const [selectedTip, setSelectedTip] = useState<number | string | null>(savedData?.tip || null);
+  const [customTip, setCustomTip] = useState("");
+  const [hasRated, setHasRated] = useState(!!savedData?.rating);
+  const [hasTipped, setHasTipped] = useState(savedData?.tip !== undefined && savedData?.tip !== null);
+  const [savedTipAmount, setSavedTipAmount] = useState<number | null>(savedData?.tip || null);
 
   const handleSaveComment = async () => {
     setIsSaving(true);
@@ -103,20 +111,30 @@ export default function CollectionDetailPage() {
     }
     setIsSaving(true);
     await new Promise(resolve => setTimeout(resolve, 500));
+    savedRatings[collection.id] = { 
+      ...savedRatings[collection.id], 
+      rating 
+    };
     setIsSaving(false);
     setHasRated(true);
     toast.success("¡Gracias por tu calificación!");
   };
 
   const handleSendTip = async () => {
-    if (!selectedTip) {
-      toast.error("Por favor selecciona un monto");
+    const tipAmount = selectedTip === "custom" ? parseInt(customTip) : selectedTip as number;
+    if (!tipAmount || tipAmount <= 0) {
+      toast.error("Por favor ingresa un monto válido");
       return;
     }
     setIsSaving(true);
     await new Promise(resolve => setTimeout(resolve, 500));
+    savedRatings[collection.id] = { 
+      ...savedRatings[collection.id], 
+      tip: tipAmount 
+    };
     setIsSaving(false);
     setHasTipped(true);
+    setSavedTipAmount(tipAmount);
     toast.success("¡Propina enviada al reciclador!");
   };
 
@@ -199,11 +217,11 @@ export default function CollectionDetailPage() {
               {hasRated ? (
                 <div className="text-center py-4">
                   <div className="flex justify-center gap-1 mb-2">
-                    {[1, 2, 3].map((star) => (
+                    {[1, 2, 3, 4, 5].map((star) => (
                       <Star
                         key={star}
                         className={cn(
-                          "w-8 h-8",
+                          "w-7 h-7",
                           star <= rating ? "fill-eco-yellow text-eco-yellow" : "text-muted-foreground"
                         )}
                       />
@@ -213,16 +231,16 @@ export default function CollectionDetailPage() {
                 </div>
               ) : (
                 <>
-                  <div className="flex justify-center gap-3">
-                    {[1, 2, 3].map((star) => (
+                  <div className="flex justify-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
                         onClick={() => setRating(star)}
-                        className="p-2 transition-transform hover:scale-110 active:scale-95"
+                        className="p-1.5 transition-transform hover:scale-110 active:scale-95"
                       >
                         <Star
                           className={cn(
-                            "w-10 h-10 transition-colors",
+                            "w-9 h-9 transition-colors",
                             star <= rating ? "fill-eco-yellow text-eco-yellow" : "text-muted-foreground hover:text-eco-yellow/50"
                           )}
                         />
@@ -255,11 +273,14 @@ export default function CollectionDetailPage() {
                   <div className="w-12 h-12 bg-eco-green-light rounded-full flex items-center justify-center mx-auto mb-2">
                     <DollarSign className="w-6 h-6 text-primary" />
                   </div>
+                  <p className="text-foreground font-semibold mb-1">
+                    ${savedTipAmount?.toLocaleString('es-CO')}
+                  </p>
                   <p className="text-muted-foreground text-sm">¡Propina enviada! Gracias por tu generosidad.</p>
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     {tipOptions.map((tip) => (
                       <button
                         key={tip.value}
@@ -275,9 +296,23 @@ export default function CollectionDetailPage() {
                       </button>
                     ))}
                   </div>
+                  
+                  {selectedTip === "custom" && (
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                      <input
+                        type="number"
+                        value={customTip}
+                        onChange={(e) => setCustomTip(e.target.value)}
+                        placeholder="Ingresa el monto"
+                        className="w-full pl-8 pr-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary focus:outline-none"
+                      />
+                    </div>
+                  )}
+                  
                   <Button 
                     onClick={handleSendTip} 
-                    disabled={isSaving || !selectedTip}
+                    disabled={isSaving || !selectedTip || (selectedTip === "custom" && !customTip)}
                     className="w-full eco-button-primary"
                   >
                     {isSaving ? "Enviando..." : "Enviar propina"}

@@ -11,7 +11,7 @@ const mockUser = {
 };
 
 export default function ProfilePage() {
-  const [notifications, setNotifications] = useState(true);
+  const [notifications, setNotifications] = useState(false);
   const [weeklyReminder, setWeeklyReminder] = useState(false);
 
   return (
@@ -62,7 +62,6 @@ export default function ProfilePage() {
           <h2 className="eco-section-title">Soporte</h2>
           <div className="eco-card space-y-1 p-0 overflow-hidden">
             <LinkRow icon={MessageCircle} label="Preguntas frecuentes" />
-            <LinkRow icon={MessageCircle} label="Contactar por WhatsApp" external />
           </div>
         </section>
 
