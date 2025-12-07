@@ -1,26 +1,16 @@
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { ScanButton } from "@/components/home/ScanButton";
 import { EcoPointsCard } from "@/components/home/EcoPointsCard";
-import { UpcomingCollectionCard } from "@/components/home/UpcomingCollectionCard";
+import { UpcomingCollectionFromAPI } from "@/components/home/UpcomingCollectionFromAPI";
+import { UpcomingCollectionSkeleton } from "@/components/home/UpcomingCollectionSkeleton";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
-
-// Mock data
-const mockUser = {
-  name: "Laura",
-  points: 120,
-};
-
-const mockCollection = {
-  id: "1",
-  date: "Domingo 7 diciembre",
-  timeSlot: "14:00 - 17:00",
-  material: "PET",
-  quantity: "3 kg",
-  address: "Cra 15 #82-45, Chapinero, Bogotá",
-  status: "accepted" as const,
-};
+import { useAuth } from "@/contexts/AuthContext";
+import { useReports } from "@/contexts/ReportsContext";
 
 export default function HomePage() {
+  const { user } = useAuth();
+  const { isLoading, upcomingCollection } = useReports();
+
   return (
     <MobileLayout>
       <div className="px-5 py-6 space-y-6">
@@ -28,7 +18,7 @@ export default function HomePage() {
         <header className="animate-fade-up flex items-start justify-between" style={{ animationDelay: "0ms" }}>
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">
-              Hola, {mockUser.name} 🌿
+              Hola, {user?.nombres || "Usuario"} 🌿
             </h1>
             <p className="text-muted-foreground mt-1">
               Cada plástico cuenta. ¡Empieza hoy!
@@ -44,12 +34,20 @@ export default function HomePage() {
 
         {/* Eco Points */}
         <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
-          <EcoPointsCard points={mockUser.points} />
+          <EcoPointsCard points={user?.puntos_acumulados || 0} />
         </div>
 
         {/* Upcoming Collection */}
         <div className="animate-fade-up" style={{ animationDelay: "150ms" }}>
-          <UpcomingCollectionCard collection={mockCollection} />
+          {isLoading ? (
+            <UpcomingCollectionSkeleton />
+          ) : upcomingCollection ? (
+            <UpcomingCollectionFromAPI report={upcomingCollection} />
+          ) : (
+            <div className="eco-card text-center py-6">
+              <p className="text-muted-foreground">No tienes recolecciones programadas</p>
+            </div>
+          )}
         </div>
 
         {/* Quick Tips */}
