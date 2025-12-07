@@ -69,11 +69,7 @@ export default function ProfilePage() {
         {/* Header */}
         <header className="text-center animate-fade-up">
           <div className="w-20 h-20 rounded-full bg-eco-green-light flex items-center justify-center mx-auto mb-4 overflow-hidden">
-            {profile?.foto_perfil ? (
-              <img src={profile.foto_perfil} alt="Foto de perfil" className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-10 h-10 text-primary" />
-            )}
+            <User className="w-10 h-10 text-primary" />
           </div>
           <h1 className="text-xl font-display font-bold text-foreground">{fullName}</h1>
           <p className="text-muted-foreground text-sm">Miembro desde 2024</p>
