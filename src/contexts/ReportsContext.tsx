@@ -28,6 +28,7 @@ interface ReportsContextType {
   refetchReports: () => Promise<void>;
   upcomingCollection: Report | null;
   addReport: (reportData: Omit<Report, "rre_id">) => Report;
+  deleteReport: (reportId: number) => void;
 }
 
 const ReportsContext = createContext<ReportsContextType | undefined>(undefined);
@@ -180,6 +181,18 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     return newReport;
   }, [user?.user_id]);
 
+  const deleteReport = useCallback((reportId: number) => {
+    const allReports = getAllReportsFromStorage();
+    const updatedReports = allReports.filter(r => r.rre_id !== reportId);
+    saveReportsToStorage(updatedReports);
+
+    // Update state with user's reports
+    if (user?.user_id) {
+      const userReports = updatedReports.filter(r => r.usu_ciudadano_id === user.user_id);
+      setReports(userReports);
+    }
+  }, [user?.user_id]);
+
   useEffect(() => {
     if (isAuthenticated && user?.user_id) {
       fetchReports();
@@ -229,6 +242,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
         refetchReports: fetchReports,
         upcomingCollection,
         addReport,
+        deleteReport,
       }}
     >
       {children}

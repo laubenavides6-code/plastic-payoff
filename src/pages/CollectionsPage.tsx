@@ -31,7 +31,11 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   },
   RECOGIDO: {
     label: "Recogido",
-    className: "bg-muted text-muted-foreground",
+    className: "bg-eco-green-light text-primary",
+  },
+  ACEPTADO: {
+    label: "Aceptado",
+    className: "bg-eco-green-light text-primary",
   },
 };
 
