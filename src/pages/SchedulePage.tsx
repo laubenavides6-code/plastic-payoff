@@ -87,10 +87,13 @@ export default function SchedulePage() {
         ? setMinutes(setHours(selectedDate, selectedTimeSlot.hour), 0)
         : selectedDate;
 
+      // Ensure minimum weight of 0.02kg
+      const cantidadKg = Math.max(parseFloat(peso) || 0.02, 0.02);
+
       const body = {
         usuario_ciudadano_id: user.user_id,
         tipo_material_id: getMaterialTypeId(material),
-        cantidad_kg: parseFloat(peso) || 0,
+        cantidad_kg: cantidadKg,
         foto_url: capturedImage ? `image_${Date.now()}.jpg` : "",
         foto_descripcion: comment,
         ubicacion_lat: addressCoords[1],
@@ -98,7 +101,8 @@ export default function SchedulePage() {
         direccion_texto: address,
         ia_confianza: Math.floor(Math.random() * 11),
         estado: "PENDIENTE",
-        fecha_reporte: fechaRecoleccion.toISOString(),
+        fecha_reporte: new Date().toISOString(),
+        fecha_recogida: fechaRecoleccion.toISOString(),
         puntos_otorgados: parseInt(puntos_otorgados) || 0,
       };
 
@@ -164,9 +168,9 @@ export default function SchedulePage() {
         <div className="eco-card bg-eco-green-light border border-primary/10 animate-fade-up">
           <div className="flex flex-col gap-1">
             <span className="font-medium text-primary" style={{ fontSize: "14px" }}>{material}</span>
-            {peso && parseFloat(peso) > 0 && (
+        {peso && (
               <div className="flex items-center gap-1">
-                <span className="text-muted-foreground font-medium" style={{ fontSize: "12px" }}>{peso}kg</span>
+                <span className="text-muted-foreground font-medium" style={{ fontSize: "12px" }}>{Math.max(parseFloat(peso) || 0.02, 0.02).toFixed(2)}kg</span>
                 <span className="text-muted-foreground/60 bg-muted/30 px-1.5 py-0.5 rounded-full" style={{ fontSize: "8px" }}>Aproximado</span>
               </div>
             )}
