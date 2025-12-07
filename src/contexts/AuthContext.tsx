@@ -25,9 +25,13 @@ const API_BASE_URL = "https://ecogiro.jdxico.easypanel.host";
 const AUTH_STORAGE_KEY = "eco_auth_user";
 
 const formatRole = (rol: string): UserRole => {
-  const normalized = rol.toLowerCase().trim();
+  const normalized = rol.toLowerCase().trim().replace(/_/g, " ");
   if (normalized === "ciudadano") return "CIUDADANO";
   if (normalized === "centro de acopio") return "CENTRO_DE_ACOPIO";
+  // Also check for already formatted uppercase versions
+  const upper = rol.toUpperCase().trim();
+  if (upper === "CIUDADANO") return "CIUDADANO";
+  if (upper === "CENTRO_DE_ACOPIO") return "CENTRO_DE_ACOPIO";
   return "CIUDADANO"; // Default fallback
 };
 
