@@ -155,40 +155,38 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
     }, 500);
   }, []);
 
-  // Handle "Select on map" button click
-  const handleOpenMapModal = () => {
+  // Handle "Select on map" button click - uses the current input address
+  const handleOpenMapModal = async () => {
     setLocationError(null);
     setGeocodingError(null);
-    
-    // Set default coords for El Regalo, Bosa
-    currentCoordsRef.current = DEFAULT_COORDS;
-    setModalAddress(DEFAULT_ADDRESS);
     setShowMapModal(true);
     
-    // Try to get user location, but don't block if denied
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // Update to user location if available
-          currentCoordsRef.current = [position.coords.longitude, position.coords.latitude];
-          if (mapRef.current) {
-            mapRef.current.flyTo({
-              center: currentCoordsRef.current,
-              zoom: 16,
-              duration: 1000,
-            });
-            reverseGeocode(currentCoordsRef.current[0], currentCoordsRef.current[1]);
-          }
-        },
-        (error) => {
-          console.log("Geolocation not available, using default location");
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
+    // Use the current input address to geocode and set the map center
+    if (inputValue && inputValue.length > 3) {
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(inputValue)}.json?access_token=${MAPBOX_TOKEN}&country=co&language=es&types=address,poi&limit=1`
+        );
+        const data = await response.json();
+        
+        if (data.features && data.features.length > 0) {
+          const feature = data.features[0];
+          currentCoordsRef.current = feature.center as [number, number];
+          setModalAddress(feature.place_name);
+        } else {
+          // Fallback to default if geocoding fails
+          currentCoordsRef.current = DEFAULT_COORDS;
+          setModalAddress(DEFAULT_ADDRESS);
         }
-      );
+      } catch (error) {
+        console.error("Error geocoding input address:", error);
+        currentCoordsRef.current = DEFAULT_COORDS;
+        setModalAddress(DEFAULT_ADDRESS);
+      }
+    } else {
+      // Use default address if input is empty
+      currentCoordsRef.current = DEFAULT_COORDS;
+      setModalAddress(DEFAULT_ADDRESS);
     }
   };
 

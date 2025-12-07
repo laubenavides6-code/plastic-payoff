@@ -58,7 +58,7 @@ export default function SchedulePage() {
 
   const [address, setAddress] = useState(DEFAULT_ADDRESS);
   const [addressCoords, setAddressCoords] = useState<[number, number]>(DEFAULT_COORDS);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(addDays(new Date(), 1));
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -162,10 +162,10 @@ export default function SchedulePage() {
       <div className="px-5 py-6 space-y-6">
         {/* Material summary */}
         <div className="eco-card bg-eco-green-light border border-primary/10 animate-fade-up">
-          <div className="flex items-center gap-3">
-            <div className="eco-badge eco-badge-green">{material}</div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="eco-badge eco-badge-green whitespace-nowrap">{material}</div>
             {peso && parseFloat(peso) > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 whitespace-nowrap">
                 <span className="text-foreground font-medium">{peso} kg</span>
                 <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">Aproximado</span>
               </div>
