@@ -28,21 +28,52 @@ const statusConfig = {
 };
 
 // Mock data - would come from API
-const mockCollection = {
-  id: "1",
-  date: "Mañana, 7 de diciembre",
-  timeSlot: "14:00 - 17:00",
-  material: "PET",
-  quantity: "3 kg",
-  address: "Cra 15 #82-45, Chapinero, Bogotá",
-  status: "accepted" as const,
-  comment: "",
+const mockCollections: Record<string, {
+  id: string;
+  date: string;
+  timeSlot: string;
+  material: string;
+  quantity: string;
+  address: string;
+  status: "pending" | "accepted" | "collected";
+  comment: string;
+}> = {
+  "1": {
+    id: "1",
+    date: "Domingo 7 diciembre",
+    timeSlot: "14:00 - 17:00",
+    material: "PET",
+    quantity: "3 kg",
+    address: "Cra 15 #82-45, Chapinero, Bogotá",
+    status: "accepted",
+    comment: "",
+  },
+  "2": {
+    id: "2",
+    date: "Jueves 27 noviembre",
+    timeSlot: "11:00 - 14:00",
+    material: "PP",
+    quantity: "2 kg",
+    address: "Cra 15 #82-45, Chapinero, Bogotá",
+    status: "collected",
+    comment: "",
+  },
+  "3": {
+    id: "3",
+    date: "Lunes 3 noviembre",
+    timeSlot: "8:00 - 11:00",
+    material: "HDPE",
+    quantity: "4 kg",
+    address: "Cra 15 #82-45, Chapinero, Bogotá",
+    status: "collected",
+    comment: "",
+  },
 };
 
 export default function CollectionDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const collection = mockCollection; // Would fetch by id
+  const collection = mockCollections[id || "1"] || mockCollections["1"];
   const status = statusConfig[collection.status];
   
   const [comment, setComment] = useState(collection.comment);
