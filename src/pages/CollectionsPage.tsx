@@ -1,5 +1,5 @@
 import { MobileLayout } from "@/components/layout/MobileLayout";
-import { Clock, MapPin, Package, ChevronRight } from "lucide-react";
+import { Clock, MapPin, Package, ChevronRight, Star, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -107,6 +107,17 @@ interface CollectionCardProps {
 
 function CollectionCard({ collection }: CollectionCardProps) {
   const status = statusConfig[collection.status];
+  
+  // Get saved rating and tip from localStorage
+  const savedRating = (() => {
+    const stored = localStorage.getItem(`rating_${collection.id}`);
+    return stored ? parseInt(stored, 10) : 0;
+  })();
+  
+  const savedTip = (() => {
+    const stored = localStorage.getItem(`tip_${collection.id}`);
+    return stored ? parseInt(stored, 10) : null;
+  })();
 
   return (
     <Link
@@ -131,6 +142,31 @@ function CollectionCard({ collection }: CollectionCardProps) {
           <MapPin className="w-4 h-4" />
           <span className="truncate">{collection.address}</span>
         </div>
+        
+        {/* Show rating and tip if collected */}
+        {collection.status === "collected" && (savedRating > 0 || savedTip !== null) && (
+          <div className="flex items-center gap-4 pt-2 border-t border-border mt-2">
+            {savedRating > 0 && (
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={cn(
+                      "w-3.5 h-3.5",
+                      star <= savedRating ? "fill-eco-yellow text-eco-yellow" : "text-muted-foreground/30"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+            {savedTip !== null && (
+              <div className="flex items-center gap-1 text-xs text-primary">
+                <DollarSign className="w-3.5 h-3.5" />
+                <span>${savedTip.toLocaleString("es-CO")}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </Link>
   );
