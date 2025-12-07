@@ -127,7 +127,7 @@ function ToggleRow({ icon: Icon, label, description, checked, onChange }: Toggle
         <span
           className={cn(
             "absolute top-1 w-4 h-4 rounded-full bg-card shadow-sm transition-transform duration-200",
-            checked ? "translate-x-6" : "translate-x-1"
+            checked ? "left-6" : "left-1"
           )}
         />
       </button>
