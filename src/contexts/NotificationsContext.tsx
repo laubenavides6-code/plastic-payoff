@@ -16,6 +16,7 @@ interface NotificationsContextType {
   addNotification: (notification: Omit<Notification, "id" | "read" | "createdAt">) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
+  deleteNotification: (id: string) => void;
   clearNotifications: () => void;
 }
 
@@ -71,6 +72,12 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     saveNotifications(updated);
   };
 
+  const deleteNotification = (id: string) => {
+    const updated = notifications.filter((n) => n.id !== id);
+    setNotifications(updated);
+    saveNotifications(updated);
+  };
+
   const clearNotifications = () => {
     setNotifications([]);
     saveNotifications([]);
@@ -84,6 +91,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         addNotification,
         markAsRead,
         markAllAsRead,
+        deleteNotification,
         clearNotifications,
       }}
     >

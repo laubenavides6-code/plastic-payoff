@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Bell, X, Gift, Megaphone, Info, Check } from "lucide-react";
+import { Bell, Gift, Megaphone, Info } from "lucide-react";
 import { useNotifications, Notification } from "@/contexts/NotificationsContext";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const getNotificationIcon = (type: Notification["type"]) => {
@@ -36,12 +35,10 @@ const formatTimeAgo = (dateString: string) => {
 
 export function NotificationCenter() {
   const [open, setOpen] = useState(false);
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, deleteNotification } = useNotifications();
 
   const handleNotificationClick = (notification: Notification) => {
-    if (!notification.read) {
-      markAsRead(notification.id);
-    }
+    deleteNotification(notification.id);
   };
 
   return (
@@ -66,17 +63,6 @@ export function NotificationCenter() {
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h3 className="font-semibold text-foreground">Notificaciones</h3>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={markAllAsRead}
-              className="text-xs text-primary hover:text-primary/80"
-            >
-              <Check className="w-3 h-3 mr-1" />
-              Marcar todas
-            </Button>
-          )}
         </div>
 
         <ScrollArea className="max-h-80">

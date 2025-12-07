@@ -40,7 +40,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-8 animate-fade-up">
         {/* Logo */}
         <div className="text-center">
-          <img src={logoEcogiro} alt="EcoGiro Logo" className="w-24 h-24 mx-auto mb-4" />
+          <img src={logoEcogiro} alt="EcoGiro Logo" className="w-24 h-24 mx-auto mb-1" />
           <h1 className="text-3xl font-display font-bold text-foreground">EcoGiro</h1>
           <p className="text-sm text-primary font-medium mt-2 italic">
             Tu reciclaje, su oportunidad, nuestro futuro
