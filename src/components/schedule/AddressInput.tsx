@@ -5,6 +5,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { cn } from "@/lib/utils";
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoibWF0ZW8xMjIiLCJhIjoiY21pcTNqYTlmMGMxZTNlcHdhMnhmczFwdiJ9.8C4efXzPA1KALooo2ZmP4w";
+const MAPBOX_STYLE = "mapbox://styles/mapbox/streets-v12";
 
 interface AddressInputProps {
   value: string;
@@ -22,14 +23,18 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showMap, setShowMap] = useState(false);
-  const [selectedCoords, setSelectedCoords] = useState<[number, number] | null>(null);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [geocodingError, setGeocodingError] = useState<string | null>(null);
+  const [modalAddress, setModalAddress] = useState("");
+  const [isGeocodingLoading, setIsGeocodingLoading] = useState(false);
   
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
+  const geocodeDebounceRef = useRef<NodeJS.Timeout>();
+  const currentCoordsRef = useRef<[number, number] | null>(null);
 
   // Fetch suggestions from Mapbox Geocoding API
   const fetchSuggestions = useCallback(async (query: string) => {
@@ -71,80 +76,141 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
   const handleSuggestionClick = (suggestion: Suggestion) => {
     setInputValue(suggestion.place_name);
     onChange(suggestion.place_name);
-    setSelectedCoords(suggestion.center);
     setSuggestions([]);
     setShowSuggestions(false);
   };
 
   // Reverse geocode coordinates to address
   const reverseGeocode = async (lng: number, lat: number) => {
+    setIsGeocodingLoading(true);
+    setGeocodingError(null);
+    
     try {
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=es`
       );
+      
+      if (!response.ok) {
+        throw new Error("Error al obtener la dirección");
+      }
+      
       const data = await response.json();
       if (data.features && data.features.length > 0) {
-        const address = data.features[0].place_name;
-        setInputValue(address);
-        onChange(address);
+        // Try to get the most specific address (with street number)
+        const addressFeature = data.features.find((f: any) => 
+          f.place_type.includes("address")
+        ) || data.features[0];
+        
+        let address = "";
+        if (addressFeature.text && addressFeature.address) {
+          address = `${addressFeature.text} ${addressFeature.address}`;
+        } else if (addressFeature.text) {
+          address = addressFeature.text;
+        } else {
+          address = addressFeature.place_name;
+        }
+        
+        setModalAddress(address);
+        currentCoordsRef.current = [lng, lat];
       }
     } catch (error) {
       console.error("Error reverse geocoding:", error);
+      setGeocodingError("Error al obtener la dirección. Intenta de nuevo.");
+    } finally {
+      setIsGeocodingLoading(false);
     }
   };
 
-  // Initialize map
+  // Debounced reverse geocoding on map move
+  const handleMapMove = useCallback(() => {
+    if (!mapRef.current) return;
+    
+    const center = mapRef.current.getCenter();
+    
+    if (geocodeDebounceRef.current) {
+      clearTimeout(geocodeDebounceRef.current);
+    }
+    
+    geocodeDebounceRef.current = setTimeout(() => {
+      reverseGeocode(center.lng, center.lat);
+    }, 500);
+  }, []);
+
+  // Handle "Select on map" button click
+  const handleOpenMapModal = () => {
+    setLocationError(null);
+    setGeocodingError(null);
+    
+    if (!navigator.geolocation) {
+      setLocationError("Los permisos de ubicación son requeridos para solicitar una recolección");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        // Location granted - open modal
+        currentCoordsRef.current = [position.coords.longitude, position.coords.latitude];
+        setShowMapModal(true);
+      },
+      (error) => {
+        // Location denied
+        console.error("Geolocation error:", error);
+        setLocationError("Los permisos de ubicación son requeridos para solicitar una recolección");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  // Initialize map when modal opens
   useEffect(() => {
-    if (!showMap || !mapContainerRef.current) return;
+    if (!showMapModal || !mapContainerRef.current) return;
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    // Default to Bogotá coordinates
-    const defaultCenter: [number, number] = selectedCoords || [-74.0721, 4.7110];
+    const center = currentCoordsRef.current || [-74.0721, 4.7110]; // Default: Bogotá
 
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/streets-v13",
-      center: defaultCenter,
-      zoom: 15,
+      style: MAPBOX_STYLE,
+      center: center,
+      zoom: 16,
     });
 
     mapRef.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-    // Add marker
-    markerRef.current = new mapboxgl.Marker({ draggable: true, color: "#22c55e" })
-      .setLngLat(defaultCenter)
-      .addTo(mapRef.current);
+    // Initial reverse geocode
+    reverseGeocode(center[0], center[1]);
 
-    // Handle marker drag
-    markerRef.current.on("dragend", () => {
-      const lngLat = markerRef.current?.getLngLat();
-      if (lngLat) {
-        setSelectedCoords([lngLat.lng, lngLat.lat]);
-        reverseGeocode(lngLat.lng, lngLat.lat);
-      }
-    });
-
-    // Handle map click
-    mapRef.current.on("click", (e) => {
-      const { lng, lat } = e.lngLat;
-      markerRef.current?.setLngLat([lng, lat]);
-      setSelectedCoords([lng, lat]);
-      reverseGeocode(lng, lat);
-    });
+    // Handle map move end
+    mapRef.current.on("moveend", handleMapMove);
 
     return () => {
       mapRef.current?.remove();
+      mapRef.current = null;
     };
-  }, [showMap]);
+  }, [showMapModal, handleMapMove]);
 
-  // Update marker position when coords change
-  useEffect(() => {
-    if (selectedCoords && markerRef.current && mapRef.current) {
-      markerRef.current.setLngLat(selectedCoords);
-      mapRef.current.flyTo({ center: selectedCoords, zoom: 16 });
+  // Handle confirm address
+  const handleConfirmAddress = () => {
+    if (modalAddress) {
+      setInputValue(modalAddress);
+      onChange(modalAddress);
     }
-  }, [selectedCoords]);
+    setShowMapModal(false);
+    setModalAddress("");
+    setGeocodingError(null);
+  };
+
+  // Handle close modal
+  const handleCloseModal = () => {
+    setShowMapModal(false);
+    setModalAddress("");
+    setGeocodingError(null);
+  };
 
   // Close suggestions on click outside
   useEffect(() => {
@@ -157,6 +223,18 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (showMapModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showMapModal]);
 
   return (
     <div className="space-y-3">
@@ -196,39 +274,102 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
         )}
       </div>
 
+      {/* Location error helper text */}
+      {locationError && (
+        <p className="text-destructive text-[14px]">{locationError}</p>
+      )}
+
       {/* Map toggle button */}
       <button
         type="button"
-        onClick={() => setShowMap(!showMap)}
-        className={cn(
-          "w-full flex items-center justify-center gap-2 py-3 rounded-xl border transition-colors",
-          showMap
-            ? "bg-primary/10 border-primary text-primary"
-            : "bg-muted/50 border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
-        )}
+        onClick={handleOpenMapModal}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border bg-muted/50 border-border text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
       >
         <Map className="w-4 h-4" />
-        <span className="text-sm font-medium">
-          {showMap ? "Ocultar mapa" : "Seleccionar en el mapa"}
-        </span>
+        <span className="text-sm font-medium">Seleccionar en el mapa</span>
       </button>
 
-      {/* Map container */}
-      {showMap && (
-        <div className="relative animate-fade-up">
-          <div
-            ref={mapContainerRef}
-            className="w-full h-64 rounded-xl overflow-hidden border border-border"
+      {/* Map Modal */}
+      {showMapModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/40"
+            onClick={handleCloseModal}
           />
-          <button
-            onClick={() => setShowMap(false)}
-            className="absolute top-2 right-2 p-1.5 bg-background/90 backdrop-blur-sm rounded-lg shadow-sm hover:bg-background transition-colors z-10"
-          >
-            <X className="w-4 h-4 text-foreground" />
-          </button>
-          <p className="text-xs text-muted-foreground text-center mt-2">
-            Toca el mapa o arrastra el marcador para seleccionar la ubicación
-          </p>
+          
+          {/* Modal Container - using same padding as screens (16px/1rem) */}
+          <div className="relative z-10 w-full mx-4 bg-card rounded-2xl overflow-hidden shadow-elevated animate-scale-in flex flex-col max-h-[85vh]">
+            {/* Modal content with 16px padding */}
+            <div className="p-4">
+              {/* Close button */}
+              <button
+                onClick={handleCloseModal}
+                className="absolute top-4 right-4 z-20 p-1 hover:opacity-70 transition-opacity"
+                aria-label="Cerrar"
+              >
+                <X className="text-foreground" style={{ width: 34, height: 34 }} />
+              </button>
+
+              {/* Map container */}
+              <div className="relative w-full h-[50vh] rounded-xl overflow-hidden mt-8">
+                <div
+                  ref={mapContainerRef}
+                  className="w-full h-full"
+                />
+                
+                {/* Fixed center pin */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                  <div className="flex flex-col items-center">
+                    <MapPin 
+                      className="w-10 h-10 text-primary drop-shadow-lg" 
+                      style={{ marginBottom: -6 }}
+                    />
+                    <div className="w-2 h-2 rounded-full bg-primary/50" />
+                  </div>
+                </div>
+                
+                {/* Loading indicator */}
+                {isGeocodingLoading && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full z-10">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                      <span className="text-xs text-muted-foreground">Buscando dirección...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Address display */}
+              <div className="mt-4 space-y-2">
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-foreground min-h-[20px]">
+                    {modalAddress || "Mueve el mapa para seleccionar ubicación"}
+                  </p>
+                </div>
+                
+                {/* Geocoding error */}
+                {geocodingError && (
+                  <p className="text-destructive text-[14px]">{geocodingError}</p>
+                )}
+              </div>
+
+              {/* Confirm button */}
+              <button
+                onClick={handleConfirmAddress}
+                disabled={!modalAddress || isGeocodingLoading}
+                className={cn(
+                  "w-full mt-4 py-4 rounded-2xl font-semibold transition-all duration-200",
+                  modalAddress && !isGeocodingLoading
+                    ? "eco-button-primary"
+                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                )}
+              >
+                Confirmar dirección
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
