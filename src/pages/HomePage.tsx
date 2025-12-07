@@ -9,7 +9,7 @@ import { useReports } from "@/contexts/ReportsContext";
 import { Recycle } from "lucide-react";
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, getTotalPoints } = useAuth();
   const { isLoading, upcomingCollection } = useReports();
 
   return (
@@ -35,7 +35,7 @@ export default function HomePage() {
 
         {/* Eco Points */}
         <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
-          <EcoPointsCard points={user?.puntos_acumulados || 0} />
+          <EcoPointsCard points={getTotalPoints()} />
         </div>
 
         {/* Upcoming Collection */}
