@@ -6,12 +6,34 @@ import { useEffect, useState } from "react";
 
 // Helper to read saved ratings from localStorage
 const STORAGE_KEY = "collection_ratings";
+const COLLECTIONS_KEY = "user_collections";
+
 const getSavedRatings = (): Record<string, { rating: number; tip: number | null }> => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : {};
   } catch {
     return {};
+  }
+};
+
+interface Collection {
+  id: string;
+  date: string;
+  timeSlot: string;
+  material: string;
+  quantity: string;
+  address: string;
+  status: "pending" | "accepted" | "collected";
+  createdAt?: string;
+}
+
+const getUserCollections = (): Collection[] => {
+  try {
+    const stored = localStorage.getItem(COLLECTIONS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
   }
 };
 
@@ -62,13 +84,18 @@ const mockCollections = [
 
 export default function CollectionsPage() {
   const [savedRatings, setSavedRatings] = useState<Record<string, { rating: number; tip: number | null }>>({});
+  const [userCollections, setUserCollections] = useState<Collection[]>([]);
   
   useEffect(() => {
     setSavedRatings(getSavedRatings());
+    setUserCollections(getUserCollections());
   }, []);
 
-  const upcoming = mockCollections.filter((c) => c.status !== "collected");
-  const history = mockCollections.filter((c) => c.status === "collected");
+  // Combine user collections with mock data
+  const allCollections = [...userCollections, ...mockCollections];
+  
+  const upcoming = allCollections.filter((c) => c.status !== "collected");
+  const history = allCollections.filter((c) => c.status === "collected");
 
   return (
     <MobileLayout>
