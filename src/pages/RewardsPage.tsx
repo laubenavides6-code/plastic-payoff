@@ -7,7 +7,7 @@ const mockData = {
   rewards: [
     { id: 1, title: "Café gratis", points: 50, image: "☕", available: true },
     { id: 2, title: "Descuento 10%", points: 100, image: "🏷️", available: true },
-    { id: 3, title: "Kit eco-aseo", points: 200, image: "🪥", available: false, subtitle: "Jabón, cepillo bambú y más" },
+    { id: 3, title: "Kit eco-aseo", points: 200, image: "🪥", available: false, subtitle: "Jabón artesanal y cepillo de bambú." },
     { id: 4, title: "Boletas de cine", points: 500, image: "🎬", available: false, subtitle: "2 entradas para ti" },
   ],
   medals: [
