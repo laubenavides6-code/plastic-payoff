@@ -37,15 +37,15 @@ const saveRating = (collectionId: string, data: { rating?: number; tip?: number 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
 };
 
-// Status config based on API values
+// Status config - Estados: ACEPTADO, EN_ESPERA, RECOGIDO
 const statusConfig: Record<string, { label: string; description: string; className: string; color: string }> = {
-  ASIGNADO: {
-    label: "Asignado",
+  ACEPTADO: {
+    label: "Aceptado",
     description: "Un reciclador recogerá tu plástico en la franja seleccionada.",
     className: "bg-eco-green-light text-primary",
     color: "text-primary",
   },
-  PENDIENTE: {
+  EN_ESPERA: {
     label: "En espera",
     description: "Un reciclador revisará tu solicitud pronto.",
     className: "bg-eco-yellow-light text-foreground",
@@ -54,12 +54,6 @@ const statusConfig: Record<string, { label: string; description: string; classNa
   RECOGIDO: {
     label: "Recogido",
     description: "¡Gracias por reciclar! Tu impacto hace la diferencia.",
-    className: "bg-eco-green-light text-primary",
-    color: "text-primary",
-  },
-  ACEPTADO: {
-    label: "Aceptado",
-    description: "Un reciclador recogerá tu plástico en la franja seleccionada.",
     className: "bg-eco-green-light text-primary",
     color: "text-primary",
   },
@@ -156,8 +150,8 @@ export default function CollectionDetailPage() {
     );
   }
 
-  const statusKey = report.rre_estado?.toUpperCase() || "PENDIENTE";
-  const status = statusConfig[statusKey] || statusConfig.PENDIENTE;
+  const statusKey = report.rre_estado?.toUpperCase() || "EN_ESPERA";
+  const status = statusConfig[statusKey] || statusConfig.EN_ESPERA;
   const formattedDate = formatDateToSpanish(report.rre_fecha_reporte);
   const isCollected = statusKey === "RECOGIDO";
 
@@ -260,7 +254,7 @@ export default function CollectionDetailPage() {
             <button 
               onClick={handleSaveComment} 
               disabled={isSaving} 
-              className="w-full py-3 text-primary font-medium hover:bg-primary/10 rounded-xl transition-colors disabled:opacity-50"
+              className="w-full py-3 bg-primary text-primary-foreground font-medium hover:bg-primary/90 rounded-xl transition-colors disabled:opacity-50"
               style={{ fontSize: "14px" }}
             >
               {isSaving ? "Guardando..." : "Guardar comentario"}

@@ -9,26 +9,27 @@ interface UpcomingCollectionFromAPIProps {
   report: Report;
 }
 
+// Status config - Estados: ACEPTADO, EN_ESPERA, RECOGIDO
 const statusConfig: Record<string, { label: string; className: string }> = {
-  ASIGNADO: {
-    label: "Asignado",
+  ACEPTADO: {
+    label: "Aceptado",
     className: "bg-eco-green-light text-primary",
   },
-  PENDIENTE: {
+  EN_ESPERA: {
     label: "En espera",
     className: "bg-eco-yellow-light text-foreground",
   },
   RECOGIDO: {
     label: "Recogido",
-    className: "bg-muted text-muted-foreground",
+    className: "bg-eco-green-light text-primary",
   },
 };
 
 export function UpcomingCollectionFromAPI({ report }: UpcomingCollectionFromAPIProps) {
   const [address, setAddress] = useState<string>(report.rre_direccion_texto || "Cargando dirección...");
   
-  const statusKey = report.rre_estado?.toUpperCase() || "PENDIENTE";
-  const status = statusConfig[statusKey] || statusConfig.PENDIENTE;
+  const statusKey = report.rre_estado?.toUpperCase() || "EN_ESPERA";
+  const status = statusConfig[statusKey] || statusConfig.EN_ESPERA;
   const formattedDate = formatDateToSpanish(report.rre_fecha_reporte);
 
   useEffect(() => {

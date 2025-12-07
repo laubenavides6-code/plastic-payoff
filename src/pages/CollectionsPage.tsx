@@ -19,22 +19,18 @@ const getSavedRatings = (): Record<string, { rating: number; tip: number | null 
   }
 };
 
-// Status config based on API values
+// Status config - Estados: ACEPTADO, EN_ESPERA, RECOGIDO
 const statusConfig: Record<string, { label: string; className: string }> = {
-  ASIGNADO: {
-    label: "Asignado",
+  ACEPTADO: {
+    label: "Aceptado",
     className: "bg-eco-green-light text-primary",
   },
-  PENDIENTE: {
+  EN_ESPERA: {
     label: "En espera",
     className: "bg-eco-yellow-light text-foreground",
   },
   RECOGIDO: {
     label: "Recogido",
-    className: "bg-eco-green-light text-primary",
-  },
-  ACEPTADO: {
-    label: "Aceptado",
     className: "bg-eco-green-light text-primary",
   },
 };
@@ -49,8 +45,8 @@ export default function CollectionsPage() {
     setSavedRatings(getSavedRatings());
   }, []);
 
-  // Filter reports by status - only PENDIENTE and RECOGIDO
-  const upcoming = reports.filter((r) => r.rre_estado === "PENDIENTE");
+  // Filter reports by status: EN_ESPERA for "Próximas", RECOGIDO for "Historial"
+  const upcoming = reports.filter((r) => r.rre_estado === "EN_ESPERA");
   const history = reports.filter((r) => r.rre_estado === "RECOGIDO");
 
   return (
@@ -148,8 +144,8 @@ interface CollectionCardProps {
 function CollectionCard({ report, savedData }: CollectionCardProps) {
   const [address, setAddress] = useState<string>(report.rre_direccion_texto || "Cargando...");
 
-  const statusKey = report.rre_estado?.toUpperCase() || "PENDIENTE";
-  const status = statusConfig[statusKey] || statusConfig.PENDIENTE;
+  const statusKey = report.rre_estado?.toUpperCase() || "EN_ESPERA";
+  const status = statusConfig[statusKey] || statusConfig.EN_ESPERA;
   const formattedDate = formatDateToSpanish(report.rre_fecha_reporte);
   const hasRating = savedData?.rating && savedData.rating > 0;
   const hasTip = savedData?.tip !== null && savedData?.tip !== undefined;

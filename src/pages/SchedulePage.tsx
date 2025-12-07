@@ -105,7 +105,7 @@ export default function SchedulePage() {
         rre_ubicacion_lat: addressCoords[1].toString(),
         rre_ubicacion_lng: addressCoords[0].toString(),
         rre_direccion_texto: address,
-        rre_estado: "PENDIENTE",
+        rre_estado: "EN_ESPERA",
         rre_fecha_reporte: fechaRecoleccion.toISOString(),
         rre_puntos_otorgados: puntosOtorgados,
       };

@@ -35,8 +35,7 @@ const ReportsContext = createContext<ReportsContextType | undefined>(undefined);
 
 // Generate default reports for a user
 const generateDefaultReports = (userId: number): Report[] => {
-  const now = new Date();
-  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const dec14 = new Date(2025, 11, 14, 10, 0, 0); // December 14, 2025
 
   return [
@@ -199,38 +198,21 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, user?.user_id, fetchReports]);
 
-  // Get the closest upcoming collection (only ACEPTADO status)
+  // Get the closest upcoming collection (only ACEPTADO status for home card)
   const upcomingCollection = (() => {
     if (reports.length === 0) return null;
 
-    const now = new Date();
-    
-    // Filter only ACEPTADO reports
+    // Filter only ACEPTADO reports for "Próxima recolección" on home
     const acceptedReports = reports.filter((report) => report.rre_estado === "ACEPTADO");
     
     if (acceptedReports.length === 0) return null;
 
-    // Filter reports that are in the future or today
-    const upcomingReports = acceptedReports.filter((report) => {
-      const reportDate = new Date(report.rre_fecha_reporte);
-      return reportDate >= now;
-    });
-
-    if (upcomingReports.length === 0) {
-      // If no future reports, get the most recent accepted one
-      return acceptedReports.reduce((closest, report) => {
-        const reportDate = new Date(report.rre_fecha_reporte);
-        const closestDate = new Date(closest.rre_fecha_reporte);
-        return reportDate > closestDate ? report : closest;
-      }, acceptedReports[0]);
-    }
-
-    // Get the closest future report
-    return upcomingReports.reduce((closest, report) => {
+    // Get the closest one by date
+    return acceptedReports.reduce((closest, report) => {
       const reportDate = new Date(report.rre_fecha_reporte);
       const closestDate = new Date(closest.rre_fecha_reporte);
       return reportDate < closestDate ? report : closest;
-    }, upcomingReports[0]);
+    }, acceptedReports[0]);
   })();
 
   return (
