@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { NotificationsProvider } from "@/contexts/NotificationsContext";
+import { ReportsProvider } from "@/contexts/ReportsContext";
 import HomePage from "./pages/HomePage";
 import ScanPage from "./pages/ScanPage";
 import SchedulePage from "./pages/SchedulePage";
@@ -82,7 +83,9 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <NotificationsProvider>
-            <AppRoutes />
+            <ReportsProvider>
+              <AppRoutes />
+            </ReportsProvider>
           </NotificationsProvider>
         </AuthProvider>
       </BrowserRouter>
