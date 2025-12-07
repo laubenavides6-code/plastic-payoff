@@ -29,13 +29,27 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
   const [geocodingError, setGeocodingError] = useState<string | null>(null);
   const [modalAddress, setModalAddress] = useState("");
   const [isGeocodingLoading, setIsGeocodingLoading] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputWrapperRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
   const geocodeDebounceRef = useRef<NodeJS.Timeout>();
   const currentCoordsRef = useRef<[number, number] | null>(null);
+
+  // Update dropdown position when showing suggestions
+  useEffect(() => {
+    if (showSuggestions && inputWrapperRef.current) {
+      const rect = inputWrapperRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  }, [showSuggestions, suggestions]);
 
   // Fetch suggestions from Mapbox Geocoding API
   const fetchSuggestions = useCallback(async (query: string) => {
@@ -216,7 +230,7 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
   // Close suggestions on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (inputRef.current && !inputRef.current.contains(e.target as Node)) {
+      if (inputWrapperRef.current && !inputWrapperRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
       }
     };
@@ -240,10 +254,11 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
   return (
     <div className="space-y-3">
       {/* Address input with autocomplete */}
-      <div className="relative" ref={inputRef}>
+      <div className="relative" ref={inputWrapperRef}>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
+            ref={inputRef}
             type="text"
             value={inputValue}
             onChange={handleInputChange}
@@ -258,9 +273,17 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
           )}
         </div>
 
-        {/* Suggestions dropdown */}
-        {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-border rounded-xl shadow-lg z-[100] max-h-60 overflow-y-auto">
+        {/* Suggestions dropdown - using portal to overlay everything */}
+        {showSuggestions && suggestions.length > 0 && createPortal(
+          <div 
+            className="fixed bg-white border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto"
+            style={{ 
+              top: dropdownPosition.top,
+              left: dropdownPosition.left,
+              width: dropdownPosition.width,
+              zIndex: 9998,
+            }}
+          >
             {suggestions.map((suggestion) => (
               <button
                 key={suggestion.id}
@@ -271,7 +294,8 @@ export default function AddressInput({ value, onChange }: AddressInputProps) {
                 <span className="text-sm text-foreground">{suggestion.place_name}</span>
               </button>
             ))}
-          </div>
+          </div>,
+          document.body
         )}
       </div>
 
