@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Calendar as CalendarIcon, Clock, MessageSquare, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -9,10 +9,7 @@ import AddressInput from "@/components/schedule/AddressInput";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/AuthContext";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
 
-const MAPBOX_TOKEN = "pk.eyJ1IjoibWF0ZW8xMjIiLCJhIjoiY21pcTNqYTlmMGMxZTNlcHdhMnhmczFwdiJ9.8C4efXzPA1KALooo2ZmP4w";
 const BASE_URL = "https://ecogiro.jdxico.easypanel.host";
 
 // Default address: El Regalo, Bosa, Bogotá
@@ -50,7 +47,7 @@ const getMaterialTypeId = (material: string): number => {
 export default function SchedulePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, updateUserPoints } = useAuth();
   
   const { material, peso, puntos_otorgados, capturedImage } = location.state || {
     material: "PET",
@@ -66,10 +63,6 @@ export default function SchedulePage() {
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
-  
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
 
   // Minimum date is tomorrow
   const minDate = addDays(new Date(), 1);
@@ -81,48 +74,6 @@ export default function SchedulePage() {
       setAddressCoords(coords);
     }
   };
-
-  // Initialize map
-  useEffect(() => {
-    if (!mapContainerRef.current) return;
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-    mapRef.current = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: addressCoords,
-      zoom: 16,
-      interactive: false,
-    });
-
-    // Create initial marker
-    markerRef.current = new mapboxgl.Marker({ color: "#16a34a" })
-      .setLngLat(addressCoords)
-      .addTo(mapRef.current);
-
-    return () => {
-      mapRef.current?.remove();
-      mapRef.current = null;
-    };
-  }, []);
-
-  // Update map when coordinates change
-  useEffect(() => {
-    if (!mapRef.current || !addressCoords) return;
-    
-    mapRef.current.flyTo({
-      center: addressCoords,
-      zoom: 16,
-      duration: 1000,
-    });
-
-    if (markerRef.current) {
-      markerRef.current.setLngLat(addressCoords);
-    } else if (mapRef.current) {
-      markerRef.current = new mapboxgl.Marker({ color: "#16a34a" })
-        .setLngLat(addressCoords)
-        .addTo(mapRef.current);
-    }
-  }, [addressCoords]);
 
   const canSubmit = address && selectedDate && selectedTime;
 
@@ -164,11 +115,28 @@ export default function SchedulePage() {
         throw new Error(errorData.errors?.[0]?.message || "Error al crear el reporte");
       }
 
+      // Fetch updated user data
+      try {
+        const userResponse = await fetch(`${BASE_URL}/usuarios/${user.user_id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          updateUserPoints(userData.puntos_acumulados);
+        }
+      } catch (userError) {
+        console.error("Error fetching updated user data:", userError);
+      }
+
       toast({
         title: "¡Solicitud enviada! 🎉",
         description: "EcoGiro notificará a un reciclador. Te avisaremos cuando acepte.",
       });
-      navigate("/collections");
+      navigate("/collections", { state: { refresh: true } });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Error al enviar la solicitud";
       toast({
@@ -196,10 +164,12 @@ export default function SchedulePage() {
         <div className="eco-card bg-eco-green-light border border-primary/10 animate-fade-up">
           <div className="flex items-center gap-3">
             <div className="eco-badge eco-badge-green">{material}</div>
-            <div className="flex items-center gap-2">
-              <span className="text-foreground font-medium">{peso} kg</span>
-              <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">Aproximado</span>
-            </div>
+            {peso && parseFloat(peso) > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-foreground font-medium">{peso} kg</span>
+                <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">Aproximado</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -207,11 +177,6 @@ export default function SchedulePage() {
         <section className="eco-section animate-fade-up" style={{ animationDelay: "50ms" }}>
           <h2 className="eco-section-title">Dirección de recolección *</h2>
           <AddressInput value={address} onChange={handleAddressChange} />
-          
-          {/* Map preview */}
-          <div className="mt-3 h-32 rounded-xl overflow-hidden border border-border">
-            <div ref={mapContainerRef} className="w-full h-full" />
-          </div>
         </section>
 
         {/* Date */}
