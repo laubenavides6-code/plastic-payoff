@@ -146,8 +146,7 @@ function CollectionCard({ report, savedData }: CollectionCardProps) {
 
   const statusKey = report.rre_estado?.toUpperCase() || "PENDIENTE";
   const status = statusConfig[statusKey] || statusConfig.PENDIENTE;
-  // Use rre_fecha_recogida if available, fallback to rre_fecha_reporte
-  const formattedDate = formatDateToSpanish(report.rre_fecha_recogida || report.rre_fecha_reporte);
+  const formattedDate = formatDateToSpanish(report.rre_fecha_reporte);
   const hasRating = savedData?.rating && savedData.rating > 0;
   const hasTip = savedData?.tip !== null && savedData?.tip !== undefined;
 
