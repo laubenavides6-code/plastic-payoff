@@ -462,7 +462,7 @@ export default function CollectionDetailPage() {
                         value={customTip}
                         onChange={(e) => setCustomTip(e.target.value)}
                         placeholder="Ingresa el monto"
-                        className="w-full pl-8 pr-4 py-3 rounded-xl border-2 border-border bg-background text-foreground focus:border-primary focus:outline-none"
+                        className="w-full pl-8 pr-4 py-3 rounded-xl border-2 border-border bg-card text-foreground focus:border-primary focus:outline-none"
                       />
                     </div>
                   )}
