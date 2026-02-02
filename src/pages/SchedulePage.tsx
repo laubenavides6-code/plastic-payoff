@@ -113,10 +113,7 @@ export default function SchedulePage() {
       // Add report to localStorage
       addReport(reportData);
 
-      // Add points to localStorage
-      if (puntosOtorgados > 0) {
-        addPoints(puntosOtorgados);
-      }
+      // Points will be added when recycler accepts the request
 
       // Refresh reports list
       await refetchReports();
