@@ -191,8 +191,13 @@ export default function CollectionsPage() {
                     mode="range"
                     defaultMonth={dateRange.from}
                     selected={dateRange}
-                    onSelect={(range) => {
-                      setDateRange({ from: range?.from, to: range?.to });
+                    onSelect={(range, selectedDay) => {
+                      // If we have a complete range and user clicks a new date, restart
+                      if (dateRange.from && dateRange.to && selectedDay) {
+                        setDateRange({ from: selectedDay, to: undefined });
+                      } else {
+                        setDateRange({ from: range?.from, to: range?.to });
+                      }
                     }}
                     numberOfMonths={1}
                     className="p-3 pointer-events-auto"

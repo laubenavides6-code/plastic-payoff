@@ -1,6 +1,6 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, DateRange } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -8,6 +8,28 @@ import { buttonVariants } from "@/components/ui/button";
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
 function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps) {
+  const [hoveredDay, setHoveredDay] = React.useState<Date | undefined>();
+  
+  // Get the selected range from props
+  const selectedRange = props.mode === "range" ? (props.selected as DateRange | undefined) : undefined;
+  const rangeStart = selectedRange?.from;
+  const rangeEnd = selectedRange?.to;
+  
+  // Calculate if a day is in the hover range (after first selection, before second)
+  const isInHoverRange = React.useCallback((day: Date) => {
+    if (!rangeStart || rangeEnd || !hoveredDay) return false;
+    
+    const dayTime = day.getTime();
+    const startTime = rangeStart.getTime();
+    const hoverTime = hoveredDay.getTime();
+    
+    if (hoverTime >= startTime) {
+      return dayTime > startTime && dayTime <= hoverTime;
+    } else {
+      return dayTime < startTime && dayTime >= hoverTime;
+    }
+  }, [rangeStart, rangeEnd, hoveredDay]);
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -31,9 +53,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         cell: cn(
           "h-9 w-9 text-center text-sm p-0 relative",
           "focus-within:relative focus-within:z-20",
-          // All cells in range get the light green background
           "[&:has([aria-selected])]:bg-primary/15",
-          // Outside days get less opacity
           "[&:has(.day-outside)]:bg-transparent"
         ),
         day: cn(
@@ -59,6 +79,14 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
       }}
+      modifiers={{
+        hoverRange: (day) => isInHoverRange(day),
+      }}
+      modifiersClassNames={{
+        hoverRange: "bg-primary/15 text-primary rounded-lg",
+      }}
+      onDayMouseEnter={(day) => setHoveredDay(day)}
+      onDayMouseLeave={() => setHoveredDay(undefined)}
       {...props}
     />
   );
