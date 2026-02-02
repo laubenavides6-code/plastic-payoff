@@ -38,20 +38,20 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         ),
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal rounded-full",
+          "h-9 w-9 p-0 font-normal rounded-lg",
           "hover:bg-primary/15 hover:text-primary",
           "focus:bg-primary/15 focus:text-primary",
           "aria-selected:opacity-100"
         ),
-        day_range_start: "day-range-start bg-primary text-primary-foreground rounded-full hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_range_end: "day-range-end bg-primary text-primary-foreground rounded-full hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+        day_range_start: "day-range-start bg-primary text-primary-foreground rounded-lg hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+        day_range_end: "day-range-end bg-primary text-primary-foreground rounded-lg hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
         day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-full",
-        day_today: "border-2 border-primary text-primary font-bold bg-transparent hover:bg-primary/15 rounded-full",
+          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-lg",
+        day_today: "border-2 border-primary text-primary font-bold bg-transparent hover:bg-primary/15 rounded-lg",
         day_outside:
           "day-outside text-muted-foreground opacity-50 aria-selected:bg-transparent aria-selected:text-muted-foreground aria-selected:opacity-30",
         day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle: "day-range-middle aria-selected:bg-primary/15 aria-selected:text-primary rounded-full hover:bg-primary/15",
+        day_range_middle: "day-range-middle aria-selected:bg-primary/15 aria-selected:text-primary rounded-lg hover:bg-primary/15",
         day_hidden: "invisible",
         ...classNames,
       }}
