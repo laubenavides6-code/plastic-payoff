@@ -1,6 +1,5 @@
-import { MobileLayout } from "@/components/layout/MobileLayout";
-import { Clock, MapPin, Package, ChevronRight, Star, DollarSign, Calendar, Filter } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, Clock, MapPin, Package, ChevronRight, Star, DollarSign, Calendar, Filter } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
 import { useReports, Report } from "@/contexts/ReportsContext";
@@ -24,23 +23,16 @@ const getSavedRatings = (): Record<string, { rating: number; tip: number | null 
   }
 };
 
-// Status config - Estados: ACEPTADO, EN_ESPERA, RECOGIDO
+// Status config
 const statusConfig: Record<string, { label: string; className: string }> = {
-  ACEPTADO: {
-    label: "Aceptado",
-    className: "bg-blue-100 text-blue-700",
-  },
-  EN_ESPERA: {
-    label: "En espera",
-    className: "bg-eco-yellow-light text-foreground",
-  },
   RECOGIDO: {
     label: "Recogido",
     className: "bg-eco-green-light text-primary",
   },
 };
 
-export default function CollectionsPage() {
+export default function CollectionHistoryPage() {
+  const navigate = useNavigate();
   const { reports, isLoading, refetchReports } = useReports();
   const [savedRatings, setSavedRatings] = useState<Record<string, { rating: number; tip: number | null }>>({});
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
@@ -53,32 +45,24 @@ export default function CollectionsPage() {
     setSavedRatings(getSavedRatings());
   }, []);
 
-  // Filter and sort reports
-  const { upcoming, history } = useMemo(() => {
-    let upcomingReports = reports.filter((r) => r.rre_estado === "EN_ESPERA" || r.rre_estado === "ACEPTADO");
-    let historyReports = reports.filter((r) => r.rre_estado === "RECOGIDO");
+  // Filter and sort history
+  const history = useMemo(() => {
+    let filtered = reports.filter((r) => r.rre_estado === "RECOGIDO");
     
-    // Apply date range filter to upcoming
+    // Apply date range filter
     if (dateRange.from) {
-      upcomingReports = upcomingReports.filter((r) => new Date(r.rre_fecha_reporte) >= dateRange.from!);
+      filtered = filtered.filter((r) => new Date(r.rre_fecha_reporte) >= dateRange.from!);
     }
     if (dateRange.to) {
       const endOfDay = new Date(dateRange.to);
       endOfDay.setHours(23, 59, 59, 999);
-      upcomingReports = upcomingReports.filter((r) => new Date(r.rre_fecha_reporte) <= endOfDay);
+      filtered = filtered.filter((r) => new Date(r.rre_fecha_reporte) <= endOfDay);
     }
     
-    // Sort upcoming by date (nearest first - ascending)
-    upcomingReports = upcomingReports.sort((a, b) => 
-      new Date(a.rre_fecha_reporte).getTime() - new Date(b.rre_fecha_reporte).getTime()
+    // Sort by date (newest first)
+    return filtered.sort((a, b) => 
+      new Date(b.rre_fecha_reporte).getTime() - new Date(a.rre_fecha_reporte).getTime()
     );
-    
-    // Sort history by date (newest first - descending) and limit to 3
-    historyReports = historyReports
-      .sort((a, b) => new Date(b.rre_fecha_reporte).getTime() - new Date(a.rre_fecha_reporte).getTime())
-      .slice(0, 3);
-    
-    return { upcoming: upcomingReports, history: historyReports };
   }, [reports, dateRange]);
 
   const clearFilters = () => {
@@ -86,19 +70,25 @@ export default function CollectionsPage() {
   };
 
   const hasFilters = dateRange.from || dateRange.to;
-  const totalHistory = reports.filter((r) => r.rre_estado === "RECOGIDO").length;
 
   return (
-    <MobileLayout>
-      <div className="px-5 py-6 space-y-6">
-        {/* Header */}
-        <header className="animate-fade-up">
-          <h1 className="text-2xl font-display font-bold text-foreground">Recolecciones</h1>
-          <p className="text-muted-foreground mt-1">Revisa el estado de tus solicitudes</p>
-        </header>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-50">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors"
+          aria-label="Volver"
+          type="button"
+        >
+          <ArrowLeft className="w-5 h-5 text-foreground" />
+        </button>
+        <h1 className="text-lg font-display font-semibold text-foreground">Historial completo</h1>
+      </header>
 
+      <div className="px-5 py-6 space-y-4 pb-24">
         {/* Date Filter */}
-        <div className="flex items-center gap-2 animate-fade-up" style={{ animationDelay: "25ms" }}>
+        <div className="flex items-center gap-2">
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="flex-1 justify-start text-left font-normal">
@@ -136,76 +126,46 @@ export default function CollectionsPage() {
           )}
         </div>
 
+        {/* Results count */}
+        <p className="text-sm text-muted-foreground">
+          {history.length} recolección{history.length !== 1 ? "es" : ""} encontrada{history.length !== 1 ? "s" : ""}
+        </p>
+
         {/* Loading skeleton */}
         {isLoading && (
-          <div className="space-y-6">
-            <section className="eco-section">
-              <h2 className="eco-section-title">Próximas</h2>
-              <div className="space-y-3">
-                <CollectionCardSkeleton />
-                <CollectionCardSkeleton />
-              </div>
-            </section>
+          <div className="space-y-3">
+            <CollectionCardSkeleton />
+            <CollectionCardSkeleton />
+            <CollectionCardSkeleton />
           </div>
         )}
 
-        {/* Upcoming */}
-        {!isLoading && upcoming.length > 0 && (
-          <section className="eco-section animate-fade-up" style={{ animationDelay: "50ms" }}>
-            <h2 className="eco-section-title">Próximas</h2>
-            <div className="space-y-3">
-              {upcoming.map((report) => (
-                <CollectionCard
-                  key={report.rre_id}
-                  report={report}
-                  savedData={savedRatings[report.rre_id.toString()]}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* History */}
-        {!isLoading && (
-          <section className="eco-section animate-fade-up" style={{ animationDelay: "100ms" }}>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="eco-section-title mb-0">Historial</h2>
-              {totalHistory > 3 && (
-                <Link 
-                  to="/collections/history" 
-                  className="text-sm text-primary font-medium flex items-center gap-1 hover:underline"
-                >
-                  Ver más
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
-              )}
-            </div>
-            {history.length > 0 ? (
-              <div className="space-y-3">
-                {history.map((report) => (
-                  <CollectionCard
-                    key={report.rre_id}
-                    report={report}
-                    savedData={savedRatings[report.rre_id.toString()]}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="eco-card text-center py-8">
-                <p className="text-muted-foreground">Aún no tienes recolecciones completadas</p>
-              </div>
-            )}
-          </section>
+        {/* History List */}
+        {!isLoading && history.length > 0 && (
+          <div className="space-y-3">
+            {history.map((report) => (
+              <CollectionCard
+                key={report.rre_id}
+                report={report}
+                savedData={savedRatings[report.rre_id.toString()]}
+              />
+            ))}
+          </div>
         )}
 
         {/* Empty state */}
-        {!isLoading && reports.length === 0 && (
+        {!isLoading && history.length === 0 && (
           <div className="eco-card text-center py-8">
-            <p className="text-muted-foreground">No tienes recolecciones registradas</p>
+            <p className="text-muted-foreground">
+              {hasFilters 
+                ? "No hay recolecciones en el rango de fechas seleccionado" 
+                : "Aún no tienes recolecciones completadas"
+              }
+            </p>
           </div>
         )}
       </div>
-    </MobileLayout>
+    </div>
   );
 }
 
@@ -233,8 +193,7 @@ interface CollectionCardProps {
 function CollectionCard({ report, savedData }: CollectionCardProps) {
   const [address, setAddress] = useState<string>(report.rre_direccion_texto || "Cargando...");
 
-  const statusKey = report.rre_estado?.toUpperCase() || "EN_ESPERA";
-  const status = statusConfig[statusKey] || statusConfig.EN_ESPERA;
+  const status = statusConfig.RECOGIDO;
   const formattedDate = formatDateToSpanish(report.rre_fecha_reporte);
   const hasRating = savedData?.rating && savedData.rating > 0;
   const hasTip = savedData?.tip !== null && savedData?.tip !== undefined;

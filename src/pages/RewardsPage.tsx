@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import confetti from "canvas-confetti";
 
 interface Reward {
   id: number;
@@ -36,15 +37,41 @@ const mockData = {
     { id: 3, title: "Reciclador Experto", subtitle: "10 kg reciclados", icon: Recycle, unlocked: false },
     { id: 4, title: "Eco-Héroe", subtitle: "50 recolecciones", icon: Sparkles, unlocked: false },
   ],
-  impact: {
-    kgRecycled: 15,
-    co2Saved: 12.5,
-    plasticBottles: 300,
-  },
+};
+
+const triggerConfetti = () => {
+  // First burst
+  confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ['#22C55E', '#16A34A', '#4ADE80', '#86EFAC', '#DCFCE7'],
+  });
+  
+  // Second burst with delay
+  setTimeout(() => {
+    confetti({
+      particleCount: 50,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 },
+      colors: ['#22C55E', '#16A34A', '#4ADE80'],
+    });
+  }, 150);
+  
+  setTimeout(() => {
+    confetti({
+      particleCount: 50,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 },
+      colors: ['#22C55E', '#16A34A', '#4ADE80'],
+    });
+  }, 300);
 };
 
 export default function RewardsPage() {
-  const { getTotalPoints } = useAuth();
+  const { getTotalPoints, deductPoints } = useAuth();
   const userPoints = getTotalPoints();
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -59,7 +86,13 @@ export default function RewardsPage() {
 
   const handleConfirmRedeem = () => {
     if (selectedReward) {
-      toast.success(`¡Listo! Tu boleta de "${selectedReward.title}" fue enviada a tu correo 📧`);
+      const success = deductPoints(selectedReward.points);
+      if (success) {
+        triggerConfetti();
+        toast.success(`¡Listo! Tu boleta de "${selectedReward.title}" fue enviada a tu correo 📧`);
+      } else {
+        toast.error("No tienes suficientes puntos para esta recompensa");
+      }
       setIsDialogOpen(false);
       setSelectedReward(null);
     }
