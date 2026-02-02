@@ -42,20 +42,20 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         ),
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal",
-          "hover:bg-transparent hover:border-2 hover:border-primary hover:text-primary",
-          "focus:bg-transparent focus:border-2 focus:border-primary focus:text-primary",
+          "h-9 w-9 p-0 font-normal rounded-xl",
+          "hover:bg-primary/15 hover:text-primary",
+          "focus:bg-primary/15 focus:text-primary",
           "aria-selected:opacity-100"
         ),
-        day_range_start: "day-range-start bg-primary text-primary-foreground rounded-xl hover:bg-primary hover:border-0 hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_range_end: "day-range-end bg-primary text-primary-foreground rounded-xl hover:bg-primary hover:border-0 hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+        day_range_start: "day-range-start bg-primary text-primary-foreground rounded-xl hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+        day_range_end: "day-range-end bg-primary text-primary-foreground rounded-xl hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
         day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:border-0 hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-xl",
-        day_today: "border-2 border-primary text-primary font-bold bg-transparent hover:bg-transparent",
+          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-xl",
+        day_today: "border-2 border-primary text-primary font-bold bg-transparent hover:bg-primary/15",
         day_outside:
           "day-outside text-muted-foreground opacity-50 aria-selected:bg-transparent aria-selected:text-muted-foreground aria-selected:opacity-30",
         day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle: "day-range-middle aria-selected:bg-transparent aria-selected:text-primary rounded-none hover:bg-transparent hover:border-2 hover:border-primary",
+        day_range_middle: "day-range-middle aria-selected:bg-transparent aria-selected:text-primary rounded-none hover:bg-primary/15",
         day_hidden: "invisible",
         ...classNames,
       }}
