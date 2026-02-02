@@ -439,11 +439,11 @@ export default function ScanPage() {
                 className="w-full h-64 object-cover rounded-xl"
               />
             </div>
-            {!hasValidMaterials && (
-              <p className="text-center text-destructive mt-3" style={{ fontSize: "12px" }}>
-                No se detectaron materiales reciclables válidos
-              </p>
-            )}
+                  {!hasValidMaterials && (
+                    <p className="text-center text-destructive mt-3" style={{ fontSize: "12px" }}>
+                      Imagen invalida, vuelve a intentarlo enfocando bien los materiales
+                    </p>
+                  )}
           </div>
         )}
 
