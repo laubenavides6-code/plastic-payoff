@@ -6,20 +6,10 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { isNative } from "@/lib/platform";
-import { takePhoto, pickFromGallery, CapturedImage } from "@/lib/camera";
+import { takePhoto, pickFromGallery } from "@/lib/camera";
+import { apiUploadImage, ScanResponse, getMockModeBadge } from "@/lib/api";
 
 type ScanStep = "permission" | "camera" | "processing" | "result";
-
-interface ScanResponse {
-  daño_ambiental: string[];
-  preparacion: string[];
-  impacto_inmediato: string[];
-  materiales: string[];
-  peso_estimado: string[];
-  puntaje: number;
-}
-
-const BASE_URL = "https://ecogiro.jdxico.easypanel.host";
 
 export default function ScanPage() {
   const navigate = useNavigate();
@@ -99,28 +89,13 @@ export default function ScanPage() {
   };
 
   const uploadImage = async (imageDataUrl: string): Promise<ScanResponse> => {
-    const response = await fetch(imageDataUrl);
-    const blob = await response.blob();
-    const file = new File([blob], "captured-image.jpg", { type: "image/jpeg" });
-
-    const formData = new FormData();
-    formData.append("user_id", user?.user_id?.toString() || "1");
-    formData.append("file", file);
-    formData.append("campania_id", "");
-
-    const apiResponse = await fetch(`${BASE_URL}/media/upload-image`, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!apiResponse.ok) {
-      const errorData = await apiResponse.json();
-      throw new Error(errorData.detail || "Error al procesar la imagen");
+    const result = await apiUploadImage(imageDataUrl, user?.user_id || 1);
+    
+    if (!result.success || !result.data) {
+      throw new Error(result.error || "Error al procesar la imagen");
     }
-
-    const data = await apiResponse.json();
-    const iaResult = JSON.parse(data.ia_result.response) as ScanResponse;
-    return iaResult;
+    
+    return result.data;
   };
 
   const processImage = async (imageDataUrl: string) => {
