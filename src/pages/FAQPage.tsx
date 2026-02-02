@@ -1,4 +1,3 @@
-import { MobileLayout } from "@/components/layout/MobileLayout";
 import { ArrowLeft, HelpCircle, Recycle, Truck, Gift, Leaf, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -97,21 +96,21 @@ export default function FAQPage() {
   const navigate = useNavigate();
 
   return (
-    <MobileLayout hideTabBar>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-50">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors"
+          aria-label="Volver"
+          type="button"
+        >
+          <ArrowLeft className="w-5 h-5 text-foreground" />
+        </button>
+        <h1 className="text-lg font-display font-semibold text-foreground">Preguntas frecuentes</h1>
+      </header>
+
       <div className="px-5 py-6 space-y-6 pb-24">
-        {/* Header */}
-        <header className="flex items-center gap-3 animate-fade-up">
-          <button 
-            onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-card"
-          >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
-          <div>
-            <h1 className="text-xl font-display font-bold text-foreground">Preguntas Frecuentes</h1>
-            <p className="text-sm text-muted-foreground">Resuelve tus dudas sobre EcoGiro</p>
-          </div>
-        </header>
 
         {/* FAQ Categories */}
         <div className="space-y-4">
@@ -163,6 +162,6 @@ export default function FAQPage() {
           </a>
         </section>
       </div>
-    </MobileLayout>
+    </div>
   );
 }

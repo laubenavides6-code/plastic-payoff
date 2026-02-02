@@ -1,4 +1,3 @@
-import { MobileLayout } from "@/components/layout/MobileLayout";
 import { ArrowLeft, Shield, Database, Eye, Lock, Share2, UserCheck, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -69,21 +68,21 @@ export default function PrivacyPolicyPage() {
   };
 
   return (
-    <MobileLayout hideTabBar>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-50">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors"
+          aria-label="Volver"
+          type="button"
+        >
+          <ArrowLeft className="w-5 h-5 text-foreground" />
+        </button>
+        <h1 className="text-lg font-display font-semibold text-foreground">Política de datos</h1>
+      </header>
+
       <div className="px-5 py-6 space-y-6 pb-24">
-        {/* Header */}
-        <header className="flex items-center gap-3 animate-fade-up">
-          <button 
-            onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full bg-card flex items-center justify-center shadow-card"
-          >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
-          <div>
-            <h1 className="text-xl font-display font-bold text-foreground">Política de Datos</h1>
-            <p className="text-sm text-muted-foreground">Última actualización: Febrero 2026</p>
-          </div>
-        </header>
 
         {/* Intro */}
         <section className="eco-card animate-fade-up" style={{ animationDelay: "50ms" }}>
@@ -155,6 +154,6 @@ export default function PrivacyPolicyPage() {
           actualizarla, notificándote de cambios significativos.
         </p>
       </div>
-    </MobileLayout>
+    </div>
   );
 }
