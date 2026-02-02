@@ -24,10 +24,22 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
     const hoverTime = hoveredDay.getTime();
     
     if (hoverTime >= startTime) {
-      return dayTime > startTime && dayTime <= hoverTime;
+      return dayTime > startTime && dayTime < hoverTime;
     } else {
-      return dayTime < startTime && dayTime >= hoverTime;
+      return dayTime < startTime && dayTime > hoverTime;
     }
+  }, [rangeStart, rangeEnd, hoveredDay]);
+
+  // Check if it's the hovered day (end of hover range)
+  const isHoverRangeEnd = React.useCallback((day: Date) => {
+    if (!rangeStart || rangeEnd || !hoveredDay) return false;
+    return day.getTime() === hoveredDay.getTime() && day.getTime() !== rangeStart.getTime();
+  }, [rangeStart, rangeEnd, hoveredDay]);
+
+  // Check if it's the start of a hover range (first date selected, hovering elsewhere)
+  const isHoverRangeStart = React.useCallback((day: Date) => {
+    if (!rangeStart || rangeEnd || !hoveredDay) return false;
+    return day.getTime() === rangeStart.getTime() && hoveredDay.getTime() !== rangeStart.getTime();
   }, [rangeStart, rangeEnd, hoveredDay]);
 
   return (
@@ -81,9 +93,13 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
       }}
       modifiers={{
         hoverRange: (day) => isInHoverRange(day),
+        hoverRangeEnd: (day) => isHoverRangeEnd(day),
+        hoverRangeStart: (day) => isHoverRangeStart(day),
       }}
       modifiersClassNames={{
         hoverRange: "bg-primary/15 text-primary rounded-none",
+        hoverRangeEnd: "bg-primary text-primary-foreground rounded-r-lg rounded-l-none",
+        hoverRangeStart: "bg-primary text-primary-foreground rounded-l-lg rounded-r-none",
       }}
       onDayMouseEnter={(day) => setHoveredDay(day)}
       onDayMouseLeave={() => setHoveredDay(undefined)}
