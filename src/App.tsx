@@ -18,6 +18,7 @@ import LoginPage from "./pages/LoginPage";
 import CampaignsPage from "./pages/CampaignsPage";
 import FAQPage from "./pages/FAQPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import CollectionHistoryPage from "./pages/CollectionHistoryPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,7 @@ function AppRoutes() {
         <Route path="/scan" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><ScanPage /></ProtectedRoute>} />
         <Route path="/schedule" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><SchedulePage /></ProtectedRoute>} />
         <Route path="/collections" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><CollectionsPage /></ProtectedRoute>} />
+        <Route path="/collections/history" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><CollectionHistoryPage /></ProtectedRoute>} />
         <Route path="/collections/:id" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><CollectionDetailPage /></ProtectedRoute>} />
         <Route path="/rewards" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><RewardsPage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><ProfilePage /></ProtectedRoute>} />

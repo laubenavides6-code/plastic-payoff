@@ -20,6 +20,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   updateUserPoints: (points: number) => void;
   addPoints: (points: number) => void;
+  deductPoints: (points: number) => boolean;
   getTotalPoints: () => number;
 }
 
@@ -103,6 +104,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     saveLocalPoints(newTotal);
   }, [localPoints]);
 
+  // Deduct points from local storage (for reward redemption)
+  const deductPoints = useCallback((points: number): boolean => {
+    const totalPoints = (user?.puntos_acumulados || 0) + localPoints;
+    if (points > totalPoints) {
+      return false; // Not enough points
+    }
+    const newLocalPoints = localPoints - points;
+    setLocalPoints(newLocalPoints);
+    saveLocalPoints(newLocalPoints);
+    return true;
+  }, [localPoints, user?.puntos_acumulados]);
+
   // Get total points (API + local)
   const getTotalPoints = useCallback((): number => {
     const apiPoints = user?.puntos_acumulados || 0;
@@ -117,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: !!user, 
       updateUserPoints,
       addPoints,
+      deductPoints,
       getTotalPoints,
     }}>
       {children}

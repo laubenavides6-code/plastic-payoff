@@ -1,5 +1,5 @@
 import { MobileLayout } from "@/components/layout/MobileLayout";
-import { User, Mail, Phone, MapPin, Bell, Calendar, MessageCircle, FileText, ChevronRight, LogOut, Loader2 } from "lucide-react";
+import { User, Mail, Phone, MapPin, Bell, Calendar, MessageCircle, FileText, ChevronRight, LogOut, Loader2, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -7,6 +7,35 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { apiGetProfile, UserProfile, getMockModeBadge } from "@/lib/api";
+import { EditProfileModal } from "@/components/profile/EditProfileModal";
+
+const PROFILE_STORAGE_KEY = "eco_user_profile";
+
+interface StoredProfile {
+  nombres: string;
+  apellidos: string;
+  email: string;
+  telefono: string;
+  direccion: string;
+  imageUrl?: string;
+}
+
+const getStoredProfile = (): StoredProfile | null => {
+  try {
+    const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveStoredProfile = (profile: StoredProfile) => {
+  try {
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+  } catch (e) {
+    console.error("Error saving profile:", e);
+  }
+};
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -15,13 +44,34 @@ export default function ProfilePage() {
   const [weeklyReminder, setWeeklyReminder] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [localProfile, setLocalProfile] = useState<StoredProfile | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user?.user_id) return;
+      
+      // First check for stored profile
+      const stored = getStoredProfile();
+      if (stored) {
+        setLocalProfile(stored);
+      }
+      
       const result = await apiGetProfile(user.user_id);
       if (result.success && result.data) {
         setProfile(result.data);
+        // Initialize local profile if not exists
+        if (!stored) {
+          const initialProfile: StoredProfile = {
+            nombres: result.data.nombres,
+            apellidos: result.data.apellidos,
+            email: result.data.email,
+            telefono: result.data.telefono,
+            direccion: "Calle 68 Sur #49-21, Kennedy, Bogotá",
+          };
+          setLocalProfile(initialProfile);
+          saveStoredProfile(initialProfile);
+        }
       } else {
         toast.error(result.error || "No se pudo cargar el perfil");
       }
@@ -36,6 +86,11 @@ export default function ProfilePage() {
     toast.success("Sesión cerrada");
   };
 
+  const handleSaveProfile = (data: StoredProfile) => {
+    setLocalProfile(data);
+    saveStoredProfile(data);
+  };
+
   const mockBadge = getMockModeBadge();
 
   if (loading) {
@@ -48,7 +103,15 @@ export default function ProfilePage() {
     );
   }
 
-  const fullName = profile ? `${profile.nombres} ${profile.apellidos}` : "Usuario";
+  const displayProfile = localProfile || {
+    nombres: profile?.nombres || "Usuario",
+    apellidos: profile?.apellidos || "",
+    email: profile?.email || "",
+    telefono: profile?.telefono || "",
+    direccion: "Calle 68 Sur #49-21, Kennedy, Bogotá",
+  };
+  
+  const fullName = `${displayProfile.nombres} ${displayProfile.apellidos}`.trim();
 
   return (
     <MobileLayout>
@@ -60,10 +123,23 @@ export default function ProfilePage() {
           </div>
         )}
         
-        {/* Header */}
-        <header className="text-center animate-fade-up">
-          <div className="w-20 h-20 rounded-full bg-eco-green-light flex items-center justify-center mx-auto mb-4 overflow-hidden">
-            <User className="w-10 h-10 text-primary" />
+        {/* Header with Edit Button */}
+        <header className="text-center animate-fade-up relative">
+          <div className="relative inline-block">
+            <div className="w-20 h-20 rounded-full bg-eco-green-light flex items-center justify-center mx-auto mb-4 overflow-hidden">
+              {localProfile?.imageUrl ? (
+                <img src={localProfile.imageUrl} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-10 h-10 text-primary" />
+              )}
+            </div>
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors"
+              aria-label="Editar perfil"
+            >
+              <Pencil className="w-4 h-4 text-primary-foreground" />
+            </button>
           </div>
           <h1 className="text-xl font-display font-bold text-foreground">{fullName}</h1>
           <p className="text-muted-foreground text-sm">Miembro desde 2024</p>
@@ -73,9 +149,9 @@ export default function ProfilePage() {
         <section className="eco-section animate-fade-up" style={{ animationDelay: "50ms" }}>
           <h2 className="eco-section-title">Datos personales</h2>
           <div className="eco-card space-y-4">
-            <InfoRow icon={Mail} label="Correo" value={profile?.email || ""} />
-            <InfoRow icon={Phone} label="Teléfono" value={profile?.telefono ? `+57 ${profile.telefono}` : ""} />
-            <InfoRow icon={MapPin} label="Dirección" value="Calle 68 Sur #49-21, Kennedy, Bogotá" />
+            <InfoRow icon={Mail} label="Correo" value={displayProfile.email} />
+            <InfoRow icon={Phone} label="Teléfono" value={displayProfile.telefono ? `+57 ${displayProfile.telefono}` : ""} />
+            <InfoRow icon={MapPin} label="Dirección" value={displayProfile.direccion} />
           </div>
         </section>
 
@@ -133,6 +209,14 @@ export default function ProfilePage() {
           </Button>
         </section>
       </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        initialData={displayProfile}
+        onSave={handleSaveProfile}
+      />
     </MobileLayout>
   );
 }
