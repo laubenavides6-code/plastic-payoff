@@ -119,10 +119,10 @@ export default function CollectionHistoryPage() {
               <div className="p-3 border-t border-border flex gap-2">
                 {hasFilters && (
                   <Button 
-                    variant="outline" 
+                    variant="ghost" 
                     size="sm" 
                     onClick={clearFilters}
-                    className="flex-1"
+                    className="flex-1 text-muted-foreground hover:text-foreground hover:bg-muted"
                   >
                     Limpiar
                   </Button>
