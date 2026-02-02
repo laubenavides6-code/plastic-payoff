@@ -148,8 +148,8 @@ export default function CollectionsPage() {
                 <PopoverTrigger asChild>
                   <button
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200",
-                      "bg-card border-[1.5px] border-gray-300 shadow-sm",
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200",
+                      "bg-card border-[1.5px] border-gray-300",
                       "hover:border-gray-400",
                       "focus:outline-none focus:border-primary focus:border-2",
                       hasFilters && "border-primary border-2 bg-primary/5"
