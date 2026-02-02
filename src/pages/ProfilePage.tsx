@@ -201,7 +201,7 @@ export default function ProfilePage() {
         <section className="eco-section animate-fade-up" style={{ animationDelay: "250ms" }}>
           <Button
             onClick={handleLogout}
-            variant="outline"
+            variant="ghost"
             className="w-full flex items-center justify-center gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
           >
             <LogOut className="w-4 h-4" />

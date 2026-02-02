@@ -251,7 +251,7 @@ export default function RewardsPage() {
             </AlertDialogAction>
             <AlertDialogCancel 
               onClick={handleCancelRedeem}
-              className="w-full mt-0"
+              className="w-full mt-0 border-0 text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               No, cancelar
             </AlertDialogCancel>
