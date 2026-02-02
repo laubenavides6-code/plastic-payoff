@@ -15,14 +15,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-white group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-gray-200 group-[.toaster]:border-l-[5px] group-[.toaster]:border-l-primary group-[.toaster]:shadow-lg group-[.toaster]:rounded-xl",
+            "group toast group-[.toaster]:bg-[hsl(var(--eco-green-light))] group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-[hsl(var(--eco-green-light))] group-[.toaster]:shadow-lg group-[.toaster]:rounded-xl",
           description: "group-[.toast]:text-muted-foreground",
           actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
-          error: "group-[.toaster]:bg-white group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-gray-200",
-          success: "group-[.toaster]:bg-white group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-gray-200",
-          warning: "group-[.toaster]:bg-white group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-gray-200",
-          info: "group-[.toaster]:bg-white group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-gray-200",
+          error: "group-[.toaster]:bg-[hsl(var(--eco-green-light))] group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-[hsl(var(--eco-green-light))]",
+          success: "group-[.toaster]:bg-[hsl(var(--eco-green-light))] group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-[hsl(var(--eco-green-light))]",
+          warning: "group-[.toaster]:bg-[hsl(var(--eco-green-light))] group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-[hsl(var(--eco-green-light))]",
+          info: "group-[.toaster]:bg-[hsl(var(--eco-green-light))] group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-[hsl(var(--eco-green-light))]",
         },
       }}
       {...props}
