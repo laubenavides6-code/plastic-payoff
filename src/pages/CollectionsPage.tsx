@@ -221,10 +221,10 @@ export default function CollectionsPage() {
                   <div className="p-3 border-t border-border flex gap-2">
                     {(tempDateRange.from || tempDateRange.to) && (
                       <Button 
-                        variant="outline" 
+                        variant="ghost" 
                         size="sm" 
                         onClick={() => setTempDateRange({ from: undefined, to: undefined })}
-                        className="flex-1"
+                        className="flex-1 text-muted-foreground hover:text-foreground hover:bg-muted"
                       >
                         Limpiar
                       </Button>
