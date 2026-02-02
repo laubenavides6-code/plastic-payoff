@@ -439,6 +439,11 @@ export default function ScanPage() {
                 className="w-full h-64 object-cover rounded-xl"
               />
             </div>
+            {!hasValidMaterials && (
+              <p className="text-center text-destructive mt-3" style={{ fontSize: "12px" }}>
+                No se detectaron materiales reciclables válidos
+              </p>
+            )}
           </div>
         )}
 
@@ -518,22 +523,17 @@ export default function ScanPage() {
               <ArrowRight className="w-5 h-5" />
             </button>
           ) : (
-            <>
-              <p className="text-center text-destructive mb-3" style={{ fontSize: "12px" }}>
-                No se detectaron materiales reciclables válidos
-              </p>
-              <button
-                onClick={() => {
-                  setCapturedImage(null);
-                  setScanResult(null);
-                  setStep("camera");
-                }}
-                className="eco-button-primary w-full flex items-center justify-center gap-2"
-              >
-                <Camera className="w-5 h-5" />
-                Reintentar escaneo
-              </button>
-            </>
+            <button
+              onClick={() => {
+                setCapturedImage(null);
+                setScanResult(null);
+                setStep("camera");
+              }}
+              className="eco-button-primary w-full flex items-center justify-center gap-2"
+            >
+              <Camera className="w-5 h-5" />
+              Reintentar escaneo
+            </button>
           )}
         </div>
       </div>
