@@ -83,7 +83,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         hoverRange: (day) => isInHoverRange(day),
       }}
       modifiersClassNames={{
-        hoverRange: "bg-primary/15 text-primary rounded-lg",
+        hoverRange: "bg-primary/15 text-primary rounded-none",
       }}
       onDayMouseEnter={(day) => setHoveredDay(day)}
       onDayMouseLeave={() => setHoveredDay(undefined)}
