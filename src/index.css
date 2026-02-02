@@ -167,7 +167,7 @@
     @apply w-full px-4 py-3 rounded-xl border-[1.5px] border-gray-300 bg-card text-foreground 
            placeholder:text-muted-foreground 
            hover:border-gray-400
-           focus:outline-none focus:border-primary focus:border-[1.5px]
+           focus:outline-none focus:border-primary focus:border-2
            transition-all duration-200;
   }
 
@@ -175,7 +175,7 @@
   .eco-input-base {
     @apply border-[1.5px] border-gray-300 bg-card rounded-xl
            hover:border-gray-400
-           focus:outline-none focus:border-primary focus:border-[1.5px] focus:ring-0
+           focus:outline-none focus:border-primary focus:border-2 focus:ring-0
            transition-all duration-200;
   }
 
