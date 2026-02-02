@@ -405,7 +405,7 @@ export default function CollectionDetailPage() {
             <button
               onClick={handleDeleteReport}
               disabled={isDeleting}
-              className="w-full py-3 text-destructive font-medium border-2 border-destructive rounded-xl hover:bg-destructive/10 transition-colors disabled:opacity-50"
+              className="w-full py-3 text-destructive font-medium hover:bg-destructive/10 rounded-xl transition-colors disabled:opacity-50"
               style={{ fontSize: "14px" }}
             >
               {isDeleting ? "Eliminando..." : "Eliminar recolección"}

@@ -194,10 +194,10 @@ export function EditProfileModal({ isOpen, onClose, initialData, onSave }: EditP
               {isSaving ? "Guardando..." : "Guardar cambios"}
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={onClose}
               disabled={isSaving}
-              className="w-full"
+              className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               Cancelar
             </Button>
