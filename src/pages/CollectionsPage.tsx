@@ -1,5 +1,5 @@
 import { MobileLayout } from "@/components/layout/MobileLayout";
-import { Clock, MapPin, Package, ChevronRight, Star, DollarSign, Calendar, Filter } from "lucide-react";
+import { Clock, MapPin, Package, ChevronRight, Star, DollarSign, Calendar, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
@@ -47,6 +47,7 @@ export default function CollectionsPage() {
     from: undefined,
     to: undefined,
   });
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   useEffect(() => {
     refetchReports();
@@ -88,6 +89,15 @@ export default function CollectionsPage() {
   const hasFilters = dateRange.from || dateRange.to;
   const totalHistory = reports.filter((r) => r.rre_estado === "RECOGIDO").length;
 
+  // Format date range display
+  const getDateRangeText = () => {
+    if (!dateRange.from) return null;
+    if (dateRange.to) {
+      return `${format(dateRange.from, "dd MMM", { locale: es })} - ${format(dateRange.to, "dd MMM", { locale: es })}`;
+    }
+    return format(dateRange.from, "dd MMM", { locale: es });
+  };
+
   return (
     <MobileLayout>
       <div className="px-5 py-6 space-y-6">
@@ -96,45 +106,6 @@ export default function CollectionsPage() {
           <h1 className="text-2xl font-display font-bold text-foreground">Recolecciones</h1>
           <p className="text-muted-foreground mt-1">Revisa el estado de tus solicitudes</p>
         </header>
-
-        {/* Date Filter */}
-        <div className="flex items-center gap-2 animate-fade-up" style={{ animationDelay: "25ms" }}>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="flex-1 justify-start text-left font-normal">
-                <Calendar className="mr-2 h-4 w-4" />
-                {dateRange.from ? (
-                  dateRange.to ? (
-                    <>
-                      {format(dateRange.from, "dd MMM", { locale: es })} - {format(dateRange.to, "dd MMM yyyy", { locale: es })}
-                    </>
-                  ) : (
-                    format(dateRange.from, "dd MMM yyyy", { locale: es })
-                  )
-                ) : (
-                  <span className="text-muted-foreground">Filtrar por fecha</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarComponent
-                initialFocus
-                mode="range"
-                defaultMonth={dateRange.from}
-                selected={dateRange}
-                onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
-                numberOfMonths={1}
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-          
-          {hasFilters && (
-            <Button variant="ghost" size="icon" onClick={clearFilters}>
-              <Filter className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
 
         {/* Loading skeleton */}
         {isLoading && (
@@ -150,18 +121,121 @@ export default function CollectionsPage() {
         )}
 
         {/* Upcoming */}
-        {!isLoading && upcoming.length > 0 && (
+        {!isLoading && (
           <section className="eco-section animate-fade-up" style={{ animationDelay: "50ms" }}>
-            <h2 className="eco-section-title">Próximas</h2>
-            <div className="space-y-3">
-              {upcoming.map((report) => (
-                <CollectionCard
-                  key={report.rre_id}
-                  report={report}
-                  savedData={savedRatings[report.rre_id.toString()]}
-                />
-              ))}
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="eco-section-title mb-0">Próximas</h2>
+              
+              {/* Date Filter */}
+              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                      "bg-card border border-border shadow-sm",
+                      "hover:border-primary/30 hover:bg-card",
+                      "focus:outline-none focus:ring-2 focus:ring-primary/20",
+                      hasFilters && "border-primary/50 bg-primary/5"
+                    )}
+                  >
+                    <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                    {hasFilters ? (
+                      <span className="text-foreground">{getDateRangeText()}</span>
+                    ) : (
+                      <span className="text-muted-foreground">Filtrar</span>
+                    )}
+                    {hasFilters && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearFilters();
+                        }}
+                        className="ml-1 p-0.5 rounded-full hover:bg-muted"
+                      >
+                        <X className="w-3 h-3 text-muted-foreground" />
+                      </button>
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <div className="p-3 border-b border-border">
+                    <p className="text-sm font-medium text-foreground">Selecciona un rango</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {dateRange.from ? (
+                        dateRange.to ? (
+                          <>
+                            <span className="text-primary font-medium">
+                              {format(dateRange.from, "dd MMM yyyy", { locale: es })}
+                            </span>
+                            {" → "}
+                            <span className="text-primary font-medium">
+                              {format(dateRange.to, "dd MMM yyyy", { locale: es })}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-primary font-medium">
+                              {format(dateRange.from, "dd MMM yyyy", { locale: es })}
+                            </span>
+                            {" → "}
+                            <span className="text-muted-foreground italic">Selecciona fecha final</span>
+                          </>
+                        )
+                      ) : (
+                        "Toca una fecha para comenzar"
+                      )}
+                    </p>
+                  </div>
+                  <CalendarComponent
+                    initialFocus
+                    mode="range"
+                    defaultMonth={dateRange.from}
+                    selected={dateRange}
+                    onSelect={(range) => {
+                      setDateRange({ from: range?.from, to: range?.to });
+                      if (range?.from && range?.to) {
+                        setIsCalendarOpen(false);
+                      }
+                    }}
+                    numberOfMonths={1}
+                    className="p-3 pointer-events-auto"
+                  />
+                  {hasFilters && (
+                    <div className="p-3 border-t border-border">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={clearFilters}
+                        className="w-full"
+                      >
+                        Limpiar filtro
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
             </div>
+            
+            {upcoming.length > 0 ? (
+              <div className="space-y-3">
+                {upcoming.map((report) => (
+                  <CollectionCard
+                    key={report.rre_id}
+                    report={report}
+                    savedData={savedRatings[report.rre_id.toString()]}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="eco-card text-center py-6">
+                <p className="text-muted-foreground">
+                  {hasFilters 
+                    ? "No hay recolecciones en el rango seleccionado" 
+                    : "No tienes recolecciones próximas"
+                  }
+                </p>
+              </div>
+            )}
           </section>
         )}
 
