@@ -164,9 +164,19 @@
   }
 
   .eco-input {
-    @apply w-full px-4 py-3 rounded-xl border-2 border-border bg-card text-foreground 
-           placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 
-           focus:border-transparent transition-all duration-200;
+    @apply w-full px-4 py-3 rounded-xl border-[1.5px] border-gray-300 bg-card text-foreground 
+           placeholder:text-muted-foreground 
+           hover:border-gray-400
+           focus:outline-none focus:border-primary focus:border-[1.5px]
+           transition-all duration-200;
+  }
+
+  /* Standardized input states for all form elements */
+  .eco-input-base {
+    @apply border-[1.5px] border-gray-300 bg-card rounded-xl
+           hover:border-gray-400
+           focus:outline-none focus:border-primary focus:border-[1.5px] focus:ring-0
+           transition-all duration-200;
   }
 
   .eco-section {
