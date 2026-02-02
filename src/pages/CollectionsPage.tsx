@@ -47,6 +47,10 @@ export default function CollectionsPage() {
     from: undefined,
     to: undefined,
   });
+  const [tempDateRange, setTempDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  });
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   useEffect(() => {
@@ -84,6 +88,19 @@ export default function CollectionsPage() {
 
   const clearFilters = () => {
     setDateRange({ from: undefined, to: undefined });
+    setTempDateRange({ from: undefined, to: undefined });
+  };
+
+  const applyFilters = () => {
+    setDateRange({ from: tempDateRange.from, to: tempDateRange.to });
+    setIsCalendarOpen(false);
+  };
+
+  const handleCalendarOpen = (open: boolean) => {
+    if (open) {
+      setTempDateRange({ from: dateRange.from, to: dateRange.to });
+    }
+    setIsCalendarOpen(open);
   };
 
   const hasFilters = dateRange.from || dateRange.to;
@@ -127,7 +144,7 @@ export default function CollectionsPage() {
               <h2 className="eco-section-title mb-0">Próximas</h2>
               
               {/* Date Filter */}
-              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <Popover open={isCalendarOpen} onOpenChange={handleCalendarOpen}>
                 <PopoverTrigger asChild>
                   <button
                     className={cn(
@@ -161,21 +178,21 @@ export default function CollectionsPage() {
                   <div className="p-3 border-b border-border">
                     <p className="text-sm font-medium text-foreground">Selecciona un rango</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {dateRange.from ? (
-                        dateRange.to ? (
+                      {tempDateRange.from ? (
+                        tempDateRange.to ? (
                           <>
                             <span className="text-primary font-medium">
-                              {format(dateRange.from, "dd MMM yyyy", { locale: es })}
+                              {format(tempDateRange.from, "dd MMM yyyy", { locale: es })}
                             </span>
                             {" → "}
                             <span className="text-primary font-medium">
-                              {format(dateRange.to, "dd MMM yyyy", { locale: es })}
+                              {format(tempDateRange.to, "dd MMM yyyy", { locale: es })}
                             </span>
                           </>
                         ) : (
                           <>
                             <span className="text-primary font-medium">
-                              {format(dateRange.from, "dd MMM yyyy", { locale: es })}
+                              {format(tempDateRange.from, "dd MMM yyyy", { locale: es })}
                             </span>
                             {" → "}
                             <span className="text-muted-foreground italic">Selecciona fecha final</span>
@@ -189,25 +206,24 @@ export default function CollectionsPage() {
                   <CalendarComponent
                     initialFocus
                     mode="range"
-                    defaultMonth={dateRange.from}
-                    selected={dateRange}
+                    defaultMonth={tempDateRange.from}
+                    selected={tempDateRange}
                     onSelect={(range, selectedDay) => {
-                      // If we have a complete range and user clicks a new date, restart
-                      if (dateRange.from && dateRange.to && selectedDay) {
-                        setDateRange({ from: selectedDay, to: undefined });
+                      if (tempDateRange.from && tempDateRange.to && selectedDay) {
+                        setTempDateRange({ from: selectedDay, to: undefined });
                       } else {
-                        setDateRange({ from: range?.from, to: range?.to });
+                        setTempDateRange({ from: range?.from, to: range?.to });
                       }
                     }}
                     numberOfMonths={1}
                     className="p-3 pointer-events-auto"
                   />
                   <div className="p-3 border-t border-border flex gap-2">
-                    {hasFilters && (
+                    {(tempDateRange.from || tempDateRange.to) && (
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={clearFilters}
+                        onClick={() => setTempDateRange({ from: undefined, to: undefined })}
                         className="flex-1"
                       >
                         Limpiar
@@ -215,7 +231,7 @@ export default function CollectionsPage() {
                     )}
                     <Button 
                       size="sm" 
-                      onClick={() => setIsCalendarOpen(false)}
+                      onClick={applyFilters}
                       className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                     >
                       Filtrar
