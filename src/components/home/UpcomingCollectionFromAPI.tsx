@@ -13,7 +13,7 @@ interface UpcomingCollectionFromAPIProps {
 const statusConfig: Record<string, { label: string; className: string }> = {
   ACEPTADO: {
     label: "Aceptado",
-    className: "bg-eco-green-light text-primary",
+    className: "bg-blue-100 text-blue-700",
   },
   EN_ESPERA: {
     label: "En espera",
