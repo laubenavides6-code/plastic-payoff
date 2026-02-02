@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
+import { apiLogin } from "@/lib/api";
 
 export type UserRole = "CIUDADANO" | "CENTRO_DE_ACOPIO" | null;
 
@@ -24,8 +25,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = "https://ecogiro.jdxico.easypanel.host";
-const AUTH_STORAGE_KEY = "eco_auth_user";
 const POINTS_STORAGE_KEY = "eco_local_points";
 
 const formatRole = (rol: string): UserRole => {
@@ -67,40 +66,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+    const result = await apiLogin(email, password);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        const errorMessage = data.detail?.[0]?.msg || "Error al iniciar sesión";
-        return { success: false, error: errorMessage };
-      }
-
-      const userData: UserData = {
-        user_id: data.user_id,
-        rol: formatRole(data.rol),
-        nombres: data.nombres,
-        apellidos: data.apellidos,
-        telefono: data.telefono,
-        puntos_acumulados: data.puntos_acumulados,
-        nivel_gamificacion: data.nivel_gamificacion,
-      };
-
-      setUser(userData);
-      // Load local points after login
-      setLocalPoints(getLocalPoints());
-      return { success: true };
-    } catch (error) {
-      console.error("Login error:", error);
-      return { success: false, error: "Error de conexión. Intenta de nuevo." };
+    if (!result.success || !result.data) {
+      return { success: false, error: result.error || "Error al iniciar sesión" };
     }
+
+    const userData: UserData = {
+      user_id: result.data.user_id,
+      rol: formatRole(result.data.rol),
+      nombres: result.data.nombres,
+      apellidos: result.data.apellidos,
+      telefono: result.data.telefono,
+      puntos_acumulados: result.data.puntos_acumulados,
+      nivel_gamificacion: result.data.nivel_gamificacion,
+    };
+
+    setUser(userData);
+    // Load local points after login
+    setLocalPoints(getLocalPoints());
+    return { success: true };
   };
 
   const logout = () => {

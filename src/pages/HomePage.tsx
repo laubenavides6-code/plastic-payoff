@@ -6,15 +6,23 @@ import { UpcomingCollectionSkeleton } from "@/components/home/UpcomingCollection
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { useAuth } from "@/contexts/AuthContext";
 import { useReports } from "@/contexts/ReportsContext";
+import { getMockModeBadge } from "@/lib/api";
 
 
 export default function HomePage() {
   const { user, getTotalPoints } = useAuth();
   const { isLoading, upcomingCollection } = useReports();
+  const mockBadge = getMockModeBadge();
 
   return (
     <MobileLayout>
       <div className="px-5 py-6 space-y-6">
+        {/* Mock Mode Badge */}
+        {mockBadge && (
+          <div className="bg-amber-100 text-amber-800 text-xs font-medium px-3 py-1.5 rounded-full text-center animate-pulse">
+            {mockBadge}
+          </div>
+        )}
         {/* Header */}
         <header className="animate-fade-up flex items-start justify-between" style={{ animationDelay: "0ms" }}>
           <div>

@@ -6,19 +6,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
-const BASE_URL = "https://ecogiro.jdxico.easypanel.host";
-
-interface UserProfile {
-  usuario_id: number;
-  nombres: string;
-  apellidos: string;
-  telefono: string;
-  email: string;
-  foto_perfil: string;
-  puntos_acumulados: number;
-  nivel_gamificacion: number;
-}
+import { apiGetProfile, UserProfile, getMockModeBadge } from "@/lib/api";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -31,16 +19,13 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user?.user_id) return;
-      try {
-        const response = await fetch(`${BASE_URL}/usuarios/${user.user_id}`);
-        if (!response.ok) throw new Error("Error al cargar perfil");
-        const data = await response.json();
-        setProfile(data);
-      } catch (error) {
-        toast.error("No se pudo cargar el perfil");
-      } finally {
-        setLoading(false);
+      const result = await apiGetProfile(user.user_id);
+      if (result.success && result.data) {
+        setProfile(result.data);
+      } else {
+        toast.error(result.error || "No se pudo cargar el perfil");
       }
+      setLoading(false);
     };
     fetchProfile();
   }, [user?.user_id]);
@@ -50,6 +35,8 @@ export default function ProfilePage() {
     navigate("/login");
     toast.success("Sesión cerrada");
   };
+
+  const mockBadge = getMockModeBadge();
 
   if (loading) {
     return (
@@ -66,6 +53,13 @@ export default function ProfilePage() {
   return (
     <MobileLayout>
       <div className="px-5 py-6 space-y-6">
+        {/* Mock Mode Badge */}
+        {mockBadge && (
+          <div className="bg-amber-100 text-amber-800 text-xs font-medium px-3 py-1.5 rounded-full text-center animate-pulse">
+            {mockBadge}
+          </div>
+        )}
+        
         {/* Header */}
         <header className="text-center animate-fade-up">
           <div className="w-20 h-20 rounded-full bg-eco-green-light flex items-center justify-center mx-auto mb-4 overflow-hidden">
