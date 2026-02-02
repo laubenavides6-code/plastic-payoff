@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Camera, X, HelpCircle, ArrowRight, Loader2, Globe, Leaf, Recycle, Footprints, Package, ImageIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,12 +11,41 @@ import { apiUploadImage, ScanResponse, getMockModeBadge } from "@/lib/api";
 
 type ScanStep = "permission" | "camera" | "processing" | "result";
 
+const CAMERA_PERMISSION_KEY = "ecogiro_camera_permission_granted";
+
 export default function ScanPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
-  const [step, setStep] = useState<ScanStep>("permission");
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [scanResult, setScanResult] = useState<ScanResponse | null>(null);
+  
+  // Check if returning from schedule page with preserved state
+  const returnState = location.state as { 
+    returnToResult?: boolean; 
+    capturedImage?: string; 
+    scanResult?: { material: string; peso: string; puntos_otorgados: string } 
+  } | null;
+  
+  const [step, setStep] = useState<ScanStep>(() => {
+    // If camera permission was previously granted, skip permission step
+    if (returnState?.returnToResult) return "result";
+    const hasPermission = localStorage.getItem(CAMERA_PERMISSION_KEY) === "true";
+    return hasPermission ? "camera" : "permission";
+  });
+  const [capturedImage, setCapturedImage] = useState<string | null>(returnState?.capturedImage || null);
+  const [scanResult, setScanResult] = useState<ScanResponse | null>(() => {
+    if (returnState?.returnToResult && returnState.scanResult) {
+      // Reconstruct scanResult from preserved state
+      return {
+        materiales: [returnState.scanResult.material],
+        preparacion: [],
+        impacto_inmediato: [],
+        daño_ambiental: [],
+        peso_estimado: [`Total: ${parseFloat(returnState.scanResult.peso) * 1000} g`],
+        puntaje: parseInt(returnState.scanResult.puntos_otorgados) || 0,
+      };
+    }
+    return null;
+  });
   const [useNativeCamera, setUseNativeCamera] = useState(false);
   
   // Web camera refs (fallback for web)
@@ -74,12 +103,14 @@ export default function ScanPage() {
   const handlePermission = async () => {
     if (useNativeCamera) {
       // For native, go directly to camera step - permissions handled by Capacitor
+      localStorage.setItem(CAMERA_PERMISSION_KEY, "true");
       setStep("camera");
     } else {
       // For web, check permissions first
       try {
         const permission = await navigator.mediaDevices.getUserMedia({ video: true });
         permission.getTracks().forEach(track => track.stop());
+        localStorage.setItem(CAMERA_PERMISSION_KEY, "true");
         setStep("camera");
       } catch (error) {
         console.error("Camera permission denied:", error);

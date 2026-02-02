@@ -142,7 +142,23 @@ export default function SchedulePage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-10">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors">
+        <button 
+          onClick={() => {
+            // Navigate back to scan result with state preserved
+            navigate("/scan", { 
+              state: { 
+                returnToResult: true,
+                capturedImage,
+                scanResult: {
+                  material,
+                  peso,
+                  puntos_otorgados,
+                }
+              } 
+            });
+          }} 
+          className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors"
+        >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <h1 className="text-lg font-display font-semibold text-foreground">Agendar recolección</h1>

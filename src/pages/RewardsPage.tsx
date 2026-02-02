@@ -125,17 +125,17 @@ export default function RewardsPage() {
               const isAvailable = userPoints >= reward.points;
               
               return (
-                <button
-                  key={reward.id}
-                  onClick={() => handleRewardClick(reward)}
-                  disabled={!isAvailable}
-                  className={cn(
-                    "eco-card text-center relative overflow-hidden flex flex-col h-full text-left transition-all",
-                    isAvailable 
-                      ? "cursor-pointer hover:shadow-elevated active:scale-[0.98]" 
-                      : "opacity-60 cursor-not-allowed"
-                  )}
-                >
+                  <button
+                    key={reward.id}
+                    onClick={() => handleRewardClick(reward)}
+                    disabled={!isAvailable}
+                    className={cn(
+                      "eco-card text-center relative overflow-hidden flex flex-col min-h-[160px] text-left transition-all",
+                      isAvailable 
+                        ? "cursor-pointer hover:shadow-elevated active:scale-[0.98]" 
+                        : "opacity-60 cursor-not-allowed"
+                    )}
+                  >
                   <div className="text-4xl mb-2">{reward.image}</div>
                   <h3 className="font-medium text-foreground text-sm">{reward.title}</h3>
                   <p className="text-[10px] text-muted-foreground mt-0.5 min-h-[28px]">
