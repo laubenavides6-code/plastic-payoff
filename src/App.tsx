@@ -15,6 +15,8 @@ import RewardsPage from "./pages/RewardsPage";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 import CampaignsPage from "./pages/CampaignsPage";
+import FAQPage from "./pages/FAQPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +67,8 @@ function AppRoutes() {
       <Route path="/collections/:id" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><CollectionDetailPage /></ProtectedRoute>} />
       <Route path="/rewards" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><RewardsPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><ProfilePage /></ProtectedRoute>} />
+      <Route path="/faq" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><FAQPage /></ProtectedRoute>} />
+      <Route path="/privacy" element={<ProtectedRoute allowedRoles={["CIUDADANO"]}><PrivacyPolicyPage /></ProtectedRoute>} />
 
       {/* Centro de Acopio routes */}
       <Route path="/campaigns" element={<ProtectedRoute allowedRoles={["CENTRO_DE_ACOPIO"]}><CampaignsPage /></ProtectedRoute>} />
