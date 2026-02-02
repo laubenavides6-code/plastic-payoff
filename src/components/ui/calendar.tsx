@@ -28,16 +28,33 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         head_row: "flex",
         head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
         row: "flex w-full mt-2",
-        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-primary/10 [&:has([aria-selected])]:bg-primary/10 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-        day: cn(buttonVariants({ variant: "ghost" }), "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-primary/10 hover:text-primary"),
-        day_range_end: "day-range-end",
+        cell: cn(
+          "h-9 w-9 text-center text-sm p-0 relative",
+          "focus-within:relative focus-within:z-20",
+          // Range start - round left only
+          "[&:has([aria-selected].day-range-start)]:rounded-l-full",
+          // Range end - round right only
+          "[&:has([aria-selected].day-range-end)]:rounded-r-full",
+          // All selected cells get background
+          "[&:has([aria-selected])]:bg-primary/15",
+          // Outside days in range
+          "[&:has([aria-selected].day-outside)]:bg-primary/5"
+        ),
+        day: cn(
+          buttonVariants({ variant: "ghost" }),
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
+          "hover:bg-primary/15 hover:text-primary",
+          "focus:bg-primary/15 focus:text-primary"
+        ),
+        day_range_start: "day-range-start bg-primary text-primary-foreground rounded-full hover:bg-primary hover:text-primary-foreground",
+        day_range_end: "day-range-end bg-primary text-primary-foreground rounded-full hover:bg-primary hover:text-primary-foreground",
         day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-primary/15 text-primary font-bold",
+          "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-full",
+        day_today: "bg-primary/20 text-primary font-bold",
         day_outside:
-          "day-outside text-muted-foreground opacity-50 aria-selected:bg-primary/10 aria-selected:text-muted-foreground aria-selected:opacity-30",
+          "day-outside text-muted-foreground opacity-50 aria-selected:bg-transparent aria-selected:text-muted-foreground aria-selected:opacity-30",
         day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle: "aria-selected:bg-primary/10 aria-selected:text-primary",
+        day_range_middle: "day-range-middle aria-selected:bg-transparent aria-selected:text-primary rounded-none",
         day_hidden: "invisible",
         ...classNames,
       }}
