@@ -104,7 +104,7 @@ export default function ProfilePage() {
         <section className="eco-section animate-fade-up" style={{ animationDelay: "150ms" }}>
           <h2 className="eco-section-title">Soporte</h2>
           <div className="eco-card space-y-1 p-0 overflow-hidden">
-            <LinkRow icon={MessageCircle} label="Preguntas frecuentes" />
+            <LinkRow icon={MessageCircle} label="Preguntas frecuentes" to="/faq" />
           </div>
         </section>
 
@@ -112,7 +112,8 @@ export default function ProfilePage() {
         <section className="eco-section animate-fade-up" style={{ animationDelay: "200ms" }}>
           <h2 className="eco-section-title">Legal</h2>
           <div className="eco-card space-y-1 p-0 overflow-hidden">
-            <LinkRow icon={FileText} label="Política de datos" />
+            <LinkRow icon={FileText} label="Política de datos" to="/privacy" />
+            
             <div className="px-4 py-3 flex items-center justify-between border-t border-border">
               <span className="text-sm text-muted-foreground">Versión</span>
               <span className="text-sm text-muted-foreground">1.0.0</span>
@@ -196,9 +197,14 @@ interface LinkRowProps {
   external?: boolean;
 }
 
-function LinkRow({ icon: Icon, label, external }: LinkRowProps) {
+function LinkRow({ icon: Icon, label, to }: LinkRowProps & { to?: string }) {
+  const navigate = useNavigate();
+  
   return (
-    <button className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/50 transition-colors border-t border-border first:border-t-0">
+    <button 
+      onClick={() => to && navigate(to)}
+      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/50 transition-colors border-t border-border first:border-t-0"
+    >
       <Icon className="w-5 h-5 text-muted-foreground" />
       <span className="flex-1 text-left text-foreground">{label}</span>
       <ChevronRight className="w-5 h-5 text-muted-foreground" />
