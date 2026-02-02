@@ -2,6 +2,58 @@
 
 Esta guía explica cómo compilar la app como aplicación nativa para Android e iOS.
 
+## 📱 Configuración de Íconos y Splash Screen
+
+### Requisitos de Assets
+
+Crea los siguientes archivos en una carpeta `resources/` en la raíz:
+
+```
+resources/
+├── icon.png              # 1024x1024 px (ícono de la app)
+├── icon-foreground.png   # 1024x1024 px (para íconos adaptativos Android)
+├── icon-background.png   # 1024x1024 px (fondo para íconos adaptativos)
+└── splash.png            # 2732x2732 px (splash screen, centrado)
+```
+
+### Generar Assets Automáticamente (Recomendado)
+
+1. Instala la herramienta de assets:
+```bash
+npm install -g @capacitor/assets
+```
+
+2. Genera todos los íconos y splash screens:
+```bash
+npx capacitor-assets generate
+```
+
+Esto creará automáticamente todos los tamaños necesarios para Android e iOS.
+
+### Configuración Manual (Alternativa)
+
+#### Android - Íconos
+Coloca los íconos en `android/app/src/main/res/`:
+- `mipmap-hdpi/ic_launcher.png` (72x72)
+- `mipmap-mdpi/ic_launcher.png` (48x48)
+- `mipmap-xhdpi/ic_launcher.png` (96x96)
+- `mipmap-xxhdpi/ic_launcher.png` (144x144)
+- `mipmap-xxxhdpi/ic_launcher.png` (192x192)
+
+#### Android - Splash Screen
+El splash se configura en `capacitor.config.ts` (ya configurado con color verde #22C55E).
+Para imagen personalizada, coloca `splash.png` en `android/app/src/main/res/drawable/`.
+
+#### iOS - Íconos
+1. Abre `ios/App/App.xcworkspace` en Xcode
+2. Navega a Assets.xcassets → AppIcon
+3. Arrastra los íconos a cada slot según el tamaño requerido
+
+#### iOS - Splash Screen
+En Xcode, edita `LaunchScreen.storyboard` o usa el color de fondo configurado en `capacitor.config.ts`.
+
+---
+
 ## 📋 Requisitos Previos
 
 ### Para Android:

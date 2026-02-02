@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Camera, X, HelpCircle, ArrowRight, Loader2, Globe, Leaf, Recycle, Footprints, Package } from "lucide-react";
+import { Camera, X, HelpCircle, ArrowRight, Loader2, Globe, Leaf, Recycle, Footprints, Package, ImageIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
+import { isNative } from "@/lib/platform";
+import { takePhoto, pickFromGallery, CapturedImage } from "@/lib/camera";
 
 type ScanStep = "permission" | "camera" | "processing" | "result";
 
@@ -25,10 +27,17 @@ export default function ScanPage() {
   const [step, setStep] = useState<ScanStep>("permission");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<ScanResponse | null>(null);
+  const [useNativeCamera, setUseNativeCamera] = useState(false);
   
+  // Web camera refs (fallback for web)
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Check if we should use native camera
+  useEffect(() => {
+    setUseNativeCamera(isNative());
+  }, []);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -37,7 +46,7 @@ export default function ScanPage() {
     }
   }, []);
 
-  const startCamera = useCallback(async () => {
+  const startWebCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -60,8 +69,9 @@ export default function ScanPage() {
   }, [navigate]);
 
   useEffect(() => {
-    if (step === "camera") {
-      startCamera();
+    // Only start web camera if not using native and in camera step
+    if (step === "camera" && !useNativeCamera) {
+      startWebCamera();
     } else {
       stopCamera();
     }
@@ -69,16 +79,22 @@ export default function ScanPage() {
     return () => {
       stopCamera();
     };
-  }, [step, startCamera, stopCamera]);
+  }, [step, useNativeCamera, startWebCamera, stopCamera]);
 
   const handlePermission = async () => {
-    try {
-      const permission = await navigator.mediaDevices.getUserMedia({ video: true });
-      permission.getTracks().forEach(track => track.stop());
+    if (useNativeCamera) {
+      // For native, go directly to camera step - permissions handled by Capacitor
       setStep("camera");
-    } catch (error) {
-      console.error("Camera permission denied:", error);
-      toast.error("Permiso de cámara denegado. Actívalo en la configuración del navegador.");
+    } else {
+      // For web, check permissions first
+      try {
+        const permission = await navigator.mediaDevices.getUserMedia({ video: true });
+        permission.getTracks().forEach(track => track.stop());
+        setStep("camera");
+      } catch (error) {
+        console.error("Camera permission denied:", error);
+        toast.error("Permiso de cámara denegado. Actívalo en la configuración del navegador.");
+      }
     }
   };
 
@@ -107,7 +123,47 @@ export default function ScanPage() {
     return iaResult;
   };
 
-  const handleCapture = async () => {
+  const processImage = async (imageDataUrl: string) => {
+    setCapturedImage(imageDataUrl);
+    stopCamera();
+    setStep("processing");
+
+    try {
+      const result = await uploadImage(imageDataUrl);
+      setScanResult(result);
+      setStep("result");
+    } catch (error) {
+      console.error("Scan error:", error);
+      toast.error("El scanner falló. Por favor, intenta de nuevo.");
+      setStep("camera");
+      if (!useNativeCamera) {
+        startWebCamera();
+      }
+    }
+  };
+
+  // Native camera capture using Capacitor
+  const handleNativeCapture = async () => {
+    const photo = await takePhoto();
+    if (photo) {
+      await processImage(photo.dataUrl);
+    } else {
+      toast.error("No se pudo capturar la imagen. Intenta de nuevo.");
+    }
+  };
+
+  // Native gallery pick using Capacitor
+  const handleGalleryPick = async () => {
+    const photo = await pickFromGallery();
+    if (photo) {
+      await processImage(photo.dataUrl);
+    } else {
+      toast.error("No se pudo seleccionar la imagen.");
+    }
+  };
+
+  // Web camera capture
+  const handleWebCapture = async () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -119,22 +175,16 @@ export default function ScanPage() {
       if (ctx) {
         ctx.drawImage(video, 0, 0);
         const imageData = canvas.toDataURL("image/jpeg", 0.8);
-        setCapturedImage(imageData);
-        stopCamera();
-        setStep("processing");
-
-        try {
-          const result = await uploadImage(imageData);
-          
-          setScanResult(result);
-          setStep("result");
-        } catch (error) {
-          console.error("Scan error:", error);
-          toast.error("El scanner falló. Por favor, intenta de nuevo.");
-          setStep("camera");
-          startCamera();
-        }
+        await processImage(imageData);
       }
+    }
+  };
+
+  const handleCapture = async () => {
+    if (useNativeCamera) {
+      await handleNativeCapture();
+    } else {
+      await handleWebCapture();
     }
   };
 
@@ -144,15 +194,12 @@ export default function ScanPage() {
   };
 
   const handleSchedule = () => {
-    // Scroll to top smoothly
     window.scrollTo({ top: 0, behavior: "smooth" });
     
-    // Extract average weight from peso_estimado array
     const pesoText = scanResult?.peso_estimado?.find(p => p.toLowerCase().includes("total")) || "";
     const pesoMatch = pesoText.match(/(\d+)\s*a\s*(\d+)/);
     const avgPeso = pesoMatch ? ((parseInt(pesoMatch[1]) + parseInt(pesoMatch[2])) / 2 / 1000).toFixed(3) : "0";
     
-    // Get materials from the response for the schedule page
     const materialesText = scanResult?.materiales?.join(", ") || "Material reciclable";
     
     navigate("/schedule", {
@@ -165,7 +212,6 @@ export default function ScanPage() {
     });
   };
 
-  // Check if materials are valid recyclable materials
   const hasValidMaterials = scanResult?.materiales && 
     scanResult.materiales.length > 0 && 
     !scanResult.materiales.some(m => 
@@ -183,6 +229,7 @@ export default function ScanPage() {
     { key: "peso_estimado", title: "Peso estimado", icon: Package, iconColor: "text-primary" },
   ];
 
+  // Permission step
   if (step === "permission") {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center">
@@ -193,14 +240,17 @@ export default function ScanPage() {
           Escanea tu plástico
         </h1>
         <p className="text-muted-foreground mb-8 animate-fade-up" style={{ animationDelay: "50ms" }}>
-          Necesitamos tu cámara para analizar tu plástico en segundos.
+          {useNativeCamera 
+            ? "Usa tu cámara para analizar tu plástico en segundos."
+            : "Necesitamos tu cámara para analizar tu plástico en segundos."
+          }
         </p>
         <button
           onClick={handlePermission}
           className="eco-button-primary w-full max-w-xs animate-fade-up"
           style={{ animationDelay: "100ms" }}
         >
-          Permitir cámara
+          {useNativeCamera ? "Abrir cámara" : "Permitir cámara"}
         </button>
         <button
           onClick={() => navigate(-1)}
@@ -213,7 +263,63 @@ export default function ScanPage() {
     );
   }
 
+  // Camera step - different UI for native vs web
   if (step === "camera") {
+    // Native camera: show button-based interface
+    if (useNativeCamera) {
+      return (
+        <div className="min-h-screen bg-background flex flex-col">
+          <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-10">
+            <button
+              onClick={handleClose}
+              className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors"
+            >
+              <X className="w-5 h-5 text-foreground" />
+            </button>
+            <h1 className="text-lg font-display font-semibold text-foreground">Escanear plástico</h1>
+          </header>
+
+          <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
+            <div className="w-32 h-32 rounded-3xl bg-eco-green-light flex items-center justify-center animate-scale-in">
+              <Camera className="w-16 h-16 text-primary" />
+            </div>
+            
+            <div className="text-center">
+              <h2 className="text-xl font-display font-bold text-foreground mb-2">
+                ¿Cómo quieres escanear?
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Toma una foto o selecciona una imagen de tu galería
+              </p>
+            </div>
+
+            <div className="w-full max-w-sm space-y-3">
+              <button
+                onClick={handleNativeCapture}
+                className="eco-button-primary w-full flex items-center justify-center gap-3"
+              >
+                <Camera className="w-5 h-5" />
+                Tomar foto
+              </button>
+              
+              <button
+                onClick={handleGalleryPick}
+                className="eco-button-secondary w-full flex items-center justify-center gap-3"
+              >
+                <ImageIcon className="w-5 h-5" />
+                Elegir de galería
+              </button>
+            </div>
+
+            <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+              <HelpCircle className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Web camera: show video stream interface
     return (
       <div className="min-h-screen bg-foreground relative flex flex-col">
         <canvas ref={canvasRef} className="hidden" />
@@ -276,6 +382,7 @@ export default function ScanPage() {
     );
   }
 
+  // Processing step
   if (step === "processing") {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center" style={{ minHeight: "100dvh" }}>
@@ -317,7 +424,6 @@ export default function ScanPage() {
       </header>
 
       <div className="px-5 py-6 space-y-6">
-        {/* Captured image preview - bigger */}
         {capturedImage && (
           <div className="animate-scale-in">
             <div className="eco-card p-2 overflow-hidden">
@@ -330,8 +436,6 @@ export default function ScanPage() {
           </div>
         )}
 
-
-        {/* Result cards */}
         {scanResult && (
           <div className="space-y-4 animate-fade-up" style={{ animationDelay: "100ms" }}>
             {sectionConfig.map(({ key, title, icon: Icon, iconColor }) => {
@@ -353,16 +457,13 @@ export default function ScanPage() {
                   </div>
                   
                   {isPesoEstimado ? (
-                    // Show average weight in kg with special styling
                     (() => {
-                      // Find the "total" line or use first item
                       const totalLine = items.find(p => p.toLowerCase().includes("total")) || items[0] || "";
                       const pesoMatch = totalLine.match(/(\d+)\s*a\s*(\d+)/);
                       let avgKg = pesoMatch 
                         ? ((parseInt(pesoMatch[1]) + parseInt(pesoMatch[2])) / 2 / 1000).toFixed(4)
                         : "0";
                       
-                      // If weight is 0, show 0.001 instead
                       if (avgKg === "0" || avgKg === "0.0000") {
                         avgKg = "0,001";
                       }
@@ -401,7 +502,6 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* Schedule button */}
         <div className="pt-4 animate-fade-up" style={{ animationDelay: "200ms" }}>
           <button
             onClick={handleSchedule}
