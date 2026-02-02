@@ -31,30 +31,31 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         cell: cn(
           "h-9 w-9 text-center text-sm p-0 relative",
           "focus-within:relative focus-within:z-20",
-          // Range start - round left only
-          "[&:has([aria-selected].day-range-start)]:rounded-l-full",
-          // Range end - round right only
-          "[&:has([aria-selected].day-range-end)]:rounded-r-full",
-          // All selected cells get background
+          // Range start cell - round left only
+          "[&:has(.day-range-start)]:rounded-l-xl",
+          // Range end cell - round right only  
+          "[&:has(.day-range-end)]:rounded-r-xl",
+          // All cells in range get the light green background
           "[&:has([aria-selected])]:bg-primary/15",
-          // Outside days in range
-          "[&:has([aria-selected].day-outside)]:bg-primary/5"
+          // Outside days get less opacity
+          "[&:has(.day-outside)]:bg-transparent"
         ),
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
-          "hover:bg-primary/15 hover:text-primary",
-          "focus:bg-primary/15 focus:text-primary"
+          "h-9 w-9 p-0 font-normal",
+          "hover:bg-primary/20 hover:text-primary",
+          "focus:bg-primary/20 focus:text-primary",
+          "aria-selected:opacity-100"
         ),
-        day_range_start: "day-range-start bg-primary text-primary-foreground rounded-full hover:bg-primary hover:text-primary-foreground",
-        day_range_end: "day-range-end bg-primary text-primary-foreground rounded-full hover:bg-primary hover:text-primary-foreground",
+        day_range_start: "day-range-start bg-primary text-primary-foreground rounded-xl hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+        day_range_end: "day-range-end bg-primary text-primary-foreground rounded-xl hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
         day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-full",
+          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-xl",
         day_today: "bg-primary/20 text-primary font-bold",
         day_outside:
           "day-outside text-muted-foreground opacity-50 aria-selected:bg-transparent aria-selected:text-muted-foreground aria-selected:opacity-30",
         day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle: "day-range-middle aria-selected:bg-transparent aria-selected:text-primary rounded-none",
+        day_range_middle: "day-range-middle aria-selected:bg-transparent aria-selected:text-primary rounded-none hover:bg-primary/25",
         day_hidden: "invisible",
         ...classNames,
       }}
