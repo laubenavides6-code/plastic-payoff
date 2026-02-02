@@ -193,25 +193,29 @@ export default function CollectionsPage() {
                     selected={dateRange}
                     onSelect={(range) => {
                       setDateRange({ from: range?.from, to: range?.to });
-                      if (range?.from && range?.to) {
-                        setIsCalendarOpen(false);
-                      }
                     }}
                     numberOfMonths={1}
                     className="p-3 pointer-events-auto"
                   />
-                  {hasFilters && (
-                    <div className="p-3 border-t border-border">
+                  <div className="p-3 border-t border-border flex gap-2">
+                    {hasFilters && (
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={clearFilters}
-                        className="w-full"
+                        className="flex-1"
                       >
-                        Limpiar filtro
+                        Limpiar
                       </Button>
-                    </div>
-                  )}
+                    )}
+                    <Button 
+                      size="sm" 
+                      onClick={() => setIsCalendarOpen(false)}
+                      className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      Filtrar
+                    </Button>
+                  </div>
                 </PopoverContent>
               </Popover>
             </div>

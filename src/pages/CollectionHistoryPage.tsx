@@ -116,6 +116,25 @@ export default function CollectionHistoryPage() {
                 numberOfMonths={1}
                 className="p-3 pointer-events-auto"
               />
+              <div className="p-3 border-t border-border flex gap-2">
+                {hasFilters && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={clearFilters}
+                    className="flex-1"
+                  >
+                    Limpiar
+                  </Button>
+                )}
+                <Button 
+                  size="sm" 
+                  onClick={() => {}}
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Filtrar
+                </Button>
+              </div>
             </PopoverContent>
           </Popover>
           
