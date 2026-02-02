@@ -14,14 +14,24 @@ const config: CapacitorConfig = {
   },
   plugins: {
     Camera: {
-      // Request camera permission on first use
       presentationStyle: 'fullScreen',
+    },
+    SplashScreen: {
+      launchShowDuration: 2000,
+      launchAutoHide: true,
+      backgroundColor: '#22C55E',
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+      splashFullScreen: true,
+      splashImmersive: true,
     },
   },
   android: {
-    // Allow loading local files
     allowMixedContent: true,
-    // Handle back button navigation
+    backgroundColor: '#ffffff',
+  },
+  ios: {
     backgroundColor: '#ffffff',
   },
 };
