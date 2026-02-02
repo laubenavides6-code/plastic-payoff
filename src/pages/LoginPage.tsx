@@ -27,7 +27,6 @@ export default function LoginPage() {
     setIsLoading(false);
 
     if (result.success) {
-      toast.success("¡Bienvenido!");
       navigate("/");
     } else {
       toast.error(result.error || "Error al iniciar sesión");
