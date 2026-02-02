@@ -148,11 +148,11 @@ export default function CollectionsPage() {
                 <PopoverTrigger asChild>
                   <button
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
-                      "bg-card border border-border shadow-sm",
-                      "hover:border-primary/30 hover:bg-card",
-                      "focus:outline-none focus:ring-2 focus:ring-primary/20",
-                      hasFilters && "border-primary/50 bg-primary/5"
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200",
+                      "bg-card border-[1.5px] border-gray-300 shadow-sm",
+                      "hover:border-gray-400",
+                      "focus:outline-none focus:border-primary focus:border-2",
+                      hasFilters && "border-primary border-2 bg-primary/5"
                     )}
                   >
                     <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
