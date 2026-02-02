@@ -421,7 +421,7 @@ export default function ScanPage() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border px-5 py-4 flex items-center gap-4 z-10">
         <button
-          onClick={handleClose}
+          onClick={() => navigate("/")}
           className="p-2 -ml-2 hover:bg-muted rounded-xl transition-colors"
         >
           <X className="w-5 h-5 text-foreground" />
