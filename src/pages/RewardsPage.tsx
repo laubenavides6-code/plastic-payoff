@@ -2,15 +2,34 @@ import { MobileLayout } from "@/components/layout/MobileLayout";
 import { Leaf, Gift, Award, Sparkles, Recycle, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+
+interface Reward {
+  id: number;
+  title: string;
+  points: number;
+  image: string;
+  subtitle?: string;
+}
 
 const mockData = {
   rewards: [
-    { id: 1, title: "5% dcto en Juan Valdez", points: 50, image: "☕", available: true },
-    { id: 2, title: "10% dcto en productos Éxito", points: 100, image: "🏷️", available: true },
-    { id: 3, title: "Kit eco-aseo", points: 200, image: "🪥", available: false, subtitle: "Jabón artesanal y cepillo de bambú." },
-    { id: 4, title: "Boletas de cine", points: 500, image: "🎬", available: false, subtitle: "2 entradas para ti" },
-  ],
+    { id: 1, title: "5% dcto en Juan Valdez", points: 50, image: "☕" },
+    { id: 2, title: "10% dcto en productos Éxito", points: 100, image: "🏷️" },
+    { id: 3, title: "Kit eco-aseo", points: 200, image: "🪥", subtitle: "Jabón artesanal y cepillo de bambú." },
+    { id: 4, title: "Boletas de cine", points: 500, image: "🎬", subtitle: "2 entradas para ti" },
+  ] as Reward[],
   medals: [
     { id: 1, title: "Primera Huella", subtitle: "Tu primer reciclaje", icon: Leaf, unlocked: true },
     { id: 2, title: "Guardián Verde", subtitle: "5 recolecciones", icon: Award, unlocked: true },
@@ -27,6 +46,29 @@ const mockData = {
 export default function RewardsPage() {
   const { getTotalPoints } = useAuth();
   const userPoints = getTotalPoints();
+  const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleRewardClick = (reward: Reward) => {
+    const isAvailable = userPoints >= reward.points;
+    if (isAvailable) {
+      setSelectedReward(reward);
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleConfirmRedeem = () => {
+    if (selectedReward) {
+      toast.success(`¡Listo! Tu boleta de "${selectedReward.title}" fue enviada a tu correo 📧`);
+      setIsDialogOpen(false);
+      setSelectedReward(null);
+    }
+  };
+
+  const handleCancelRedeem = () => {
+    setIsDialogOpen(false);
+    setSelectedReward(null);
+  };
 
   return (
     <MobileLayout>
@@ -50,11 +92,15 @@ export default function RewardsPage() {
               const isAvailable = userPoints >= reward.points;
               
               return (
-                <div
+                <button
                   key={reward.id}
+                  onClick={() => handleRewardClick(reward)}
+                  disabled={!isAvailable}
                   className={cn(
-                    "eco-card text-center relative overflow-hidden flex flex-col h-full",
-                    !isAvailable && "opacity-80"
+                    "eco-card text-center relative overflow-hidden flex flex-col h-full text-left transition-all",
+                    isAvailable 
+                      ? "cursor-pointer hover:shadow-elevated active:scale-[0.98]" 
+                      : "opacity-60 cursor-not-allowed"
                   )}
                 >
                   <div className="text-4xl mb-2">{reward.image}</div>
@@ -78,7 +124,12 @@ export default function RewardsPage() {
                       </div>
                     )}
                   </div>
-                </div>
+                  {!isAvailable && (
+                    <div className="absolute top-2 right-2">
+                      <Lock className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  )}
+                </button>
               );
             })}
           </div>
@@ -144,6 +195,36 @@ export default function RewardsPage() {
           </div>
         </section>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <AlertDialogContent className="max-w-[90%] rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center">
+              <span className="text-4xl block mb-2">{selectedReward?.image}</span>
+              ¿Canjear recompensa?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Estás a punto de canjear <strong>{selectedReward?.points} puntos</strong> por "{selectedReward?.title}". 
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <AlertDialogAction 
+              onClick={handleConfirmRedeem}
+              className="w-full bg-primary hover:bg-primary/90"
+            >
+              Sí, canjear
+            </AlertDialogAction>
+            <AlertDialogCancel 
+              onClick={handleCancelRedeem}
+              className="w-full mt-0"
+            >
+              No, cancelar
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileLayout>
   );
 }
